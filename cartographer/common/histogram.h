@@ -24,10 +24,24 @@
 
 namespace cartographer {
 namespace common {
-
+/**
+ * @brief 统计数据，用直方图显示
+ * 
+ */
 class Histogram {
  public:
+  /**
+   * @brief 添加数据
+   * 
+   * @param value 
+   */
   void Add(float value);
+  /**
+   * @brief 通过字符串用直方图显示数据
+   * 
+   * @param buckets 直方图的直方条数，即把数据分为几级
+   * @return string 
+   */
   string ToString(int buckets) const;
 
  private:

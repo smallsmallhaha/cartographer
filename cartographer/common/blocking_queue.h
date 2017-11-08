@@ -31,6 +31,11 @@ namespace common {
 
 // A thread-safe blocking queue that is useful for producer/consumer patterns.
 // 'T' must be movable.
+/**
+ * @brief 线程安全的阻塞队列，适用于生产者/消费者模型
+ * 
+ * @tparam T 
+ */
 template <typename T>
 class BlockingQueue {
  public:
@@ -46,6 +51,11 @@ class BlockingQueue {
   explicit BlockingQueue(const size_t queue_size) : queue_size_(queue_size) {}
 
   // Pushes a value onto the queue. Blocks if the queue is full.
+  /**
+   * @brief 向队尾压入数据
+   * 
+   * @param t 
+   */
   void Push(T t) {
     MutexLocker lock(&mutex_);
     lock.Await([this]() REQUIRES(mutex_) { return QueueNotFullCondition(); });
@@ -53,6 +63,14 @@ class BlockingQueue {
   }
 
   // Like push, but returns false if 'timeout' is reached.
+  /**
+   * @brief 向队尾压入数据，若超时，则压入失败，返回false
+   * 
+   * @param t 
+   * @param timeout 
+   * @return true 
+   * @return false 
+   */
   bool PushWithTimeout(T t, const common::Duration timeout) {
     MutexLocker lock(&mutex_);
     if (!lock.AwaitWithTimeout(
@@ -63,8 +81,13 @@ class BlockingQueue {
     deque_.push_back(std::move(t));
     return true;
   }
-
+  
   // Pops the next value from the queue. Blocks until a value is available.
+  /**
+   * @brief 从队首取出数据
+   * 
+   * @return T 
+   */
   T Pop() {
     MutexLocker lock(&mutex_);
     lock.Await([this]() REQUIRES(mutex_) { return QueueNotEmptyCondition(); });
@@ -73,7 +96,12 @@ class BlockingQueue {
     deque_.pop_front();
     return t;
   }
-
+  /**
+   * @brief 从队首取出数据，若超时，则压入失败，返回false
+   * 
+   * @param timeout 
+   * @return T 
+   */
   // Like Pop, but can timeout. Returns nullptr in this case.
   T PopWithTimeout(const common::Duration timeout) {
     MutexLocker lock(&mutex_);
@@ -86,10 +114,16 @@ class BlockingQueue {
     deque_.pop_front();
     return t;
   }
-
+  
   // Returns the next value in the queue or nullptr if the queue is empty.
   // Maintains ownership. This assumes a member function get() that returns
   // a pointer to the given type R.
+  /**
+   * @brief 返回队首指针
+   * 
+   * @tparam R 
+   * @return const R* 
+   */
   template <typename R>
   const R* Peek() {
     MutexLocker lock(&mutex_);

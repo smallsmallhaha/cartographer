@@ -31,12 +31,32 @@ namespace common {
 // 'configuration_files/' directory installed with Cartographer. It contains
 // reasonable configuration for the various Cartographer components which
 // provide a good starting ground for new platforms.
+/**
+ * @brief 配置文件解析器，将.lua配置文件解析为字典的格式
+ * 
+ */
 class ConfigurationFileResolver : public FileResolver {
  public:
+  /**
+   * @brief 初始化配置文件目录列表
+   * 
+   * @param configuration_files_directories 
+   */
   explicit ConfigurationFileResolver(
       const std::vector<string>& configuration_files_directories);
-
+  /**
+   * @brief 搜索配置文件路径，返回有配置文件basename的完整路径
+   * 
+   * @param basename 
+   * @return string 
+   */
   string GetFullPathOrDie(const string& basename) override;
+  /**
+   * @brief 获取文件内容
+   * 
+   * @param basename 
+   * @return string 
+   */
   string GetFileContentOrDie(const string& basename) override;
 
  private:

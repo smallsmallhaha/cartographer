@@ -26,6 +26,10 @@ namespace common {
 
 // Signals when a sample should be taken from a stream of data to select a
 // uniformly distributed fraction of the data.
+/**
+ * @brief 固定比率采样
+ * 
+ */
 class FixedRatioSampler {
  public:
   explicit FixedRatioSampler(double ratio);
@@ -35,17 +39,40 @@ class FixedRatioSampler {
   FixedRatioSampler& operator=(const FixedRatioSampler&) = delete;
 
   // Returns true if this pulse should result in an sample.
+  /**
+   * @brief 当前脉冲是否应当被采样
+   * 
+   * @return true 
+   * @return false 
+   */
   bool Pulse();
 
   // Returns a debug string describing the current ratio of samples to pulses.
+  /**
+   * @brief 返回当前采样频率的信息
+   * 
+   * @return string 
+   */
   string DebugString();
 
  private:
   // Sampling occurs if the proportion of samples to pulses drops below this
   // number.
+  /**
+   * @brief 如果采样比例低于此值，则触发采样
+   * 
+   */
   const double ratio_;
 
+  /**
+   * @brief 脉冲数
+   * 
+   */
   int64 num_pulses_ = 0;
+  /**
+   * @brief 采样数
+   * 
+   */
   int64 num_samples_ = 0;
 };
 

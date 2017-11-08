@@ -27,6 +27,11 @@ namespace common {
 
 // Implementation of c++14's std::make_unique, taken from
 // https://isocpp.org/files/papers/N3656.txt
+/**
+ * @brief std::make_unique实现
+ * 构造 T 类型对象并将其包装进 std::unique_ptr
+ * @tparam T 
+ */
 template <class T>
 struct _Unique_if {
   typedef std::unique_ptr<T> _Single_object;
@@ -41,12 +46,21 @@ template <class T, size_t N>
 struct _Unique_if<T[N]> {
   typedef void _Known_bound;
 };
-
+/**
+ * @brief make_unique<T>
+ * 
+ * @tparam T 
+ * @tparam Args 
+ */
 template <class T, class... Args>
 typename _Unique_if<T>::_Single_object make_unique(Args&&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
-
+/**
+ * @brief make_unique<T[]>
+ * 
+ * @tparam T 
+ */
 template <class T>
 typename _Unique_if<T>::_Unknown_bound make_unique(size_t n) {
   typedef typename std::remove_extent<T>::type U;

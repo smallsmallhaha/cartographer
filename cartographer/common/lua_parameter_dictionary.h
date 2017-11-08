@@ -39,6 +39,10 @@ class FileResolver {
 };
 
 // A parameter dictionary that gets loaded from Lua code.
+/**
+ * @brief 从.lua文件中获取的字典，用于储存程序参数
+ * 
+ */
 class LuaParameterDictionary {
  public:
   // Constructs the dictionary from a Lua Table specification.

@@ -29,6 +29,10 @@ namespace sensor {
 // detected. 'misses' are points in the direction of rays for which no return
 // was detected, and were inserted at a configured distance. It is assumed that
 // between the 'origin' and 'misses' is free space.
+/**
+ * @brief 雷达扫描数据，origin为扫描中心，returns为有返回值的点云坐标，misses为无返回的点云
+ * 
+ */
 struct RangeData {
   Eigen::Vector3f origin;
   PointCloud returns;
@@ -43,6 +47,10 @@ RangeData CropRangeData(const RangeData& range_data, float min_z, float max_z);
 
 // Like RangeData but with compressed point clouds. The point order changes
 // when converting from RangeData.
+/**
+ * @brief 压缩后的雷达扫描数据
+ * 
+ */
 struct CompressedRangeData {
   Eigen::Vector3f origin;
   CompressedPointCloud returns;

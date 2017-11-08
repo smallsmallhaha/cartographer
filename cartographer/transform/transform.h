@@ -30,6 +30,13 @@ namespace transform {
 
 // Returns the non-negative rotation angle in radians of the 3D transformation
 // 'transform'.
+/**
+ * @brief 获取旋转角，弧度
+ * 
+ * @tparam FloatType 
+ * @param transform 
+ * @return FloatType 
+ */
 template <typename FloatType>
 FloatType GetAngle(const Rigid3<FloatType>& transform) {
   return FloatType(2) * std::atan2(transform.rotation().vec().norm(),
@@ -39,6 +46,13 @@ FloatType GetAngle(const Rigid3<FloatType>& transform) {
 // Returns the yaw component in radians of the given 3D 'rotation'. Assuming
 // 'rotation' is composed of three rotations around X, then Y, then Z, returns
 // the angle of the Z rotation.
+/**
+ * @brief 已知四元数，返回航偏
+ * 
+ * @tparam T 
+ * @param rotation 
+ * @return T 
+ */
 template <typename T>
 T GetYaw(const Eigen::Quaternion<T>& rotation) {
   const Eigen::Matrix<T, 3, 1> direction =
@@ -48,6 +62,13 @@ T GetYaw(const Eigen::Quaternion<T>& rotation) {
 
 // Returns the yaw component in radians of the given 3D transformation
 // 'transform'.
+/**
+ * @brief 已知平移量和四元数，返回航偏
+ * 
+ * @tparam T 
+ * @param transform 
+ * @return T 
+ */
 template <typename T>
 T GetYaw(const Rigid3<T>& transform) {
   return GetYaw(transform.rotation());
@@ -56,6 +77,13 @@ T GetYaw(const Rigid3<T>& transform) {
 // Returns an angle-axis vector (a vector with the length of the rotation angle
 // pointing to the direction of the rotation axis) representing the same
 // rotation as the given 'quaternion'.
+/**
+ * @brief 返回轴角
+ * 
+ * @tparam T 
+ * @param quaternion 
+ * @return Eigen::Matrix<T, 3, 1> 
+ */
 template <typename T>
 Eigen::Matrix<T, 3, 1> RotationQuaternionToAngleAxisVector(
     const Eigen::Quaternion<T>& quaternion) {
@@ -82,6 +110,13 @@ Eigen::Matrix<T, 3, 1> RotationQuaternionToAngleAxisVector(
 
 // Returns a quaternion representing the same rotation as the given 'angle_axis'
 // vector.
+/**
+ * @brief 轴角转换为四元数
+ * 
+ * @tparam T 
+ * @param angle_axis 
+ * @return Eigen::Quaternion<T> 
+ */
 template <typename T>
 Eigen::Quaternion<T> AngleAxisVectorToRotationQuaternion(
     const Eigen::Matrix<T, 3, 1>& angle_axis) {
@@ -99,6 +134,13 @@ Eigen::Quaternion<T> AngleAxisVectorToRotationQuaternion(
 }
 
 // Projects 'transform' onto the XY plane.
+/**
+ * @brief 投影到XY平面上,只计算XY平面上的转角和位移
+ * 
+ * @tparam T 
+ * @param transform 
+ * @return Rigid2<T> 
+ */
 template <typename T>
 Rigid2<T> Project2D(const Rigid3<T>& transform) {
   return Rigid2<T>(transform.translation().template head<2>(),
@@ -106,6 +148,13 @@ Rigid2<T> Project2D(const Rigid3<T>& transform) {
 }
 
 // Embeds 'transform' into 3D space in the XY plane.
+/**
+ * @brief 将二维旋转变换到三维旋转(Z轴转角为0)
+ * 
+ * @tparam T 
+ * @param transform 
+ * @return Rigid3<T> 
+ */
 template <typename T>
 Rigid3<T> Embed3D(const Rigid2<T>& transform) {
   return Rigid3<T>(

@@ -1,4 +1,7 @@
 build/
 *~
 *kdev*
-cartographer/.vscode/
+<<<<<<< HEAD
+=======
+.vscode/
+>>>>>>> bcb445d... complete annotation for cartographer/sensor/

@@ -46,6 +46,10 @@ struct QueueKey {
 // queue before dispatching the next time ordered value across all queues.
 //
 // This class is thread-compatible.
+/**
+ * @brief 线程安全的有序多重队列
+ * 
+ */
 class OrderedMultiQueue {
  public:
   using Callback = std::function<void(std::unique_ptr<Data>)>;

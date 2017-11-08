@@ -30,6 +30,10 @@ namespace io {
 
 // A number of points, captured around the same 'time' and by a
 // sensor at the same 'origin'.
+/**
+ * @brief 点包，由一个传感器同时获取的点集，有相同的原点
+ * 
+ */
 struct PointsBatch {
   PointsBatch() {
     origin = Eigen::Vector3f::Zero();

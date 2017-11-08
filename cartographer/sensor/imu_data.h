@@ -24,6 +24,10 @@
 namespace cartographer {
 namespace sensor {
 
+/**
+ * @brief IMU数据结构，包含时间，线性加速度和角速度数据
+ * 
+ */
 struct ImuData {
   common::Time time;
   Eigen::Vector3d linear_acceleration;

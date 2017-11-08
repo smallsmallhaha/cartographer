@@ -33,6 +33,10 @@ namespace sensor {
 // Internally, points are grouped by blocks. Each block encodes a bit of meta
 // data (number of points in block, coordinates of the block) and encodes each
 // point with a fixed bit rate in relation to the block.
+/**
+ * @brief 压缩点云
+ * 
+ */
 class CompressedPointCloud {
  public:
   class ConstIterator;

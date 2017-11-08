@@ -26,6 +26,10 @@ namespace sensor {
 
 // The fixed frame pose data(like gps, pose, etc.) will be used in the
 // optimization.
+/**
+ * @brief 固定参考系的pose数据，含有时间和pose
+ * 
+ */
 struct FixedFramePoseData {
   common::Time time;
   transform::Rigid3d pose;

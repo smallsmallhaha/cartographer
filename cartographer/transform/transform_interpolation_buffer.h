@@ -27,6 +27,10 @@ namespace cartographer {
 namespace transform {
 
 // A time-ordered buffer of transforms that supports interpolated lookups.
+/**
+ * @brief 旋转和平移变换内插缓冲区类
+ * 
+ */
 class TransformInterpolationBuffer {
  public:
   TransformInterpolationBuffer() = default;
@@ -56,6 +60,10 @@ class TransformInterpolationBuffer {
   bool empty() const;
 
  private:
+  /**
+   * @brief 主要的数据结构，记录时间和变换矩阵的对应关系对
+   * 
+   */
   struct TimestampedTransform {
     common::Time time;
     transform::Rigid3d transform;

@@ -37,7 +37,10 @@ class Data {
   virtual void AddToTrajectoryBuilder(
       mapping::GlobalTrajectoryBuilderInterface* trajectory_builder) = 0;
 };
-
+/**
+ * @brief 分发距离测量数据
+ * 
+ */
 class DispatchableRangefinderData : public Data {
  public:
   DispatchableRangefinderData(const common::Time time,
@@ -56,7 +59,11 @@ class DispatchableRangefinderData : public Data {
   const Eigen::Vector3f origin_;
   const PointCloud ranges_;
 };
-
+/**
+ * @brief 分发除点云外的其它数据（例如IMU，Odom等）
+ * 
+ * @tparam DataType 
+ */
 template <typename DataType>
 class Dispatchable : public Data {
  public:
@@ -71,7 +78,13 @@ class Dispatchable : public Data {
  private:
   const DataType data_;
 };
-
+/**
+ * @brief 创建Dispatchable类，用于分发/向上层传递数据
+ * 
+ * @tparam DataType 
+ * @param data 
+ * @return std::unique_ptr<Dispatchable<DataType>> 
+ */
 template <typename DataType>
 std::unique_ptr<Dispatchable<DataType>> MakeDispatchable(const DataType& data) {
   return common::make_unique<Dispatchable<DataType>>(data);

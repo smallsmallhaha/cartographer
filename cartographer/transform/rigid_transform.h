@@ -29,6 +29,11 @@
 namespace cartographer {
 namespace transform {
 
+/**
+ * @brief 二维坐标变换类
+ * 
+ * @tparam FloatType 
+ */
 template <typename FloatType>
 class Rigid2 {
  public:
@@ -52,7 +57,11 @@ class Rigid2 {
   static Rigid2 Translation(const Vector& vector) {
     return Rigid2(vector, Rotation2D::Identity());
   }
-
+  /**
+   * @brief 单位旋转阵
+   * 
+   * @return Rigid2<FloatType> 
+   */
   static Rigid2<FloatType> Identity() { return Rigid2<FloatType>(); }
 
   template <typename OtherType>
@@ -64,11 +73,19 @@ class Rigid2 {
   const Vector& translation() const { return translation_; }
 
   Rotation2D rotation() const { return rotation_; }
-
+  /**
+   * @brief 标准旋转角
+   * 
+   * @return double 
+   */
   double normalized_angle() const {
     return common::NormalizeAngleDifference(rotation().angle());
   }
-
+  /**
+   * @brief 逆变换
+   * 
+   * @return Rigid2 
+   */
   Rigid2 inverse() const {
     const Rotation2D rotation = rotation_.inverse();
     const Vector translation = -(rotation * translation_);
@@ -117,7 +134,11 @@ std::ostream& operator<<(std::ostream& os,
 
 using Rigid2d = Rigid2<double>;
 using Rigid2f = Rigid2<float>;
-
+/**
+ * @brief 三维坐标变换类，用四元数和平移量表示
+ * 
+ * @tparam FloatType 
+ */
 template <typename FloatType>
 class Rigid3 {
  public:
@@ -142,7 +163,11 @@ class Rigid3 {
   static Rigid3 Translation(const Vector& vector) {
     return Rigid3(vector, Quaternion::Identity());
   }
-
+  /**
+   * @brief 单位变换
+   * 
+   * @return Rigid3<FloatType> 
+   */
   static Rigid3<FloatType> Identity() { return Rigid3<FloatType>(); }
 
   template <typename OtherType>
@@ -153,7 +178,11 @@ class Rigid3 {
 
   const Vector& translation() const { return translation_; }
   const Quaternion& rotation() const { return rotation_; }
-
+  /**
+   * @brief 逆变换
+   * 
+   * @return Rigid3 
+   */
   Rigid3 inverse() const {
     const Quaternion rotation = rotation_.conjugate();
     const Vector translation = -(rotation * translation_);

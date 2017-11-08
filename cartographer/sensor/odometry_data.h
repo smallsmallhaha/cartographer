@@ -23,7 +23,10 @@
 
 namespace cartographer {
 namespace sensor {
-
+/**
+ * @brief Odometry数据结构，包含时间和位姿数据
+ * 
+ */
 struct OdometryData {
   common::Time time;
   transform::Rigid3d pose;

@@ -30,6 +30,10 @@ namespace io {
 //
 // TODO(whess): Compress the file instead of individual messages for better
 // compression performance? Should we use LZ4?
+/**
+ * @brief Proto类型数据写入类
+ * 
+ */
 class ProtoStreamWriter {
  public:
   ProtoStreamWriter(const string& filename);
@@ -56,6 +60,10 @@ class ProtoStreamWriter {
 };
 
 // A reader of the format produced by ProtoStreamWriter.
+/**
+ * @brief proto类型数据读取类
+ * 
+ */
 class ProtoStreamReader {
  public:
   ProtoStreamReader(const string& filename);

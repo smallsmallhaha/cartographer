@@ -27,11 +27,22 @@ namespace sensor {
 
 // Returns a voxel filtered copy of 'point_cloud' where 'size' is the length
 // a voxel edge.
+/**
+ * @brief 使用三维像素过滤器过滤点云
+ * 
+ * @param point_cloud 输入点云
+ * @param size 三维像素过滤器大小
+ * @return PointCloud 输出点云
+ */
 PointCloud VoxelFiltered(const PointCloud& point_cloud, float size);
 
 // Voxel filter for point clouds. For each voxel, the assembled point cloud
 // contains the first point that fell into it from any of the inserted point
 // clouds.
+/**
+ * @brief 三维像素过滤器
+ * 
+ */
 class VoxelFilter {
  public:
   // 'size' is the length of a voxel edge.
@@ -41,6 +52,10 @@ class VoxelFilter {
   VoxelFilter& operator=(const VoxelFilter&) = delete;
 
   // Inserts a point cloud into the voxel filter.
+  /**
+   * @brief 通过以下方式划分三维像素和过滤点云，坐标/分辨率取整为像素坐标，若未被占用则占用该格网点
+   * 
+   */
   void InsertPointCloud(const PointCloud& point_cloud);
 
   // Returns the filtered point cloud representing the occupied voxels.

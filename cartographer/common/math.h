@@ -28,6 +28,15 @@ namespace cartographer {
 namespace common {
 
 // Clamps 'value' to be in the range ['min', 'max'].
+/**
+ * @brief 返回范围内的一个数值
+ * 
+ * @tparam T 
+ * @param value 
+ * @param min 
+ * @param max 
+ * @return T 若value>max，返回max;若value<min，返回min;否则返回value
+ */
 template <typename T>
 T Clamp(const T value, const T min, const T max) {
   if (value > max) {
@@ -58,6 +67,13 @@ constexpr double DegToRad(double deg) { return M_PI * deg / 180.; }
 constexpr double RadToDeg(double rad) { return 180. * rad / M_PI; }
 
 // Bring the 'difference' between two angles into [-pi; pi].
+/**
+ * @brief 标准化角度差至[-pi,pi]
+ * 
+ * @tparam T 
+ * @param difference 
+ * @return T 
+ */
 template <typename T>
 T NormalizeAngleDifference(T difference) {
   while (difference > M_PI) {

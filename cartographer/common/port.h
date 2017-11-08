@@ -46,7 +46,12 @@ inline int RoundToInt(const double x) { return std::lround(x); }
 inline int64 RoundToInt64(const float x) { return std::lround(x); }
 
 inline int64 RoundToInt64(const double x) { return std::lround(x); }
-
+/**
+ * @brief 快速压缩字符串
+ * 
+ * @param uncompressed 
+ * @param compressed 
+ */
 inline void FastGzipString(const string& uncompressed, string* compressed) {
   boost::iostreams::filtering_ostream out;
   out.push(
@@ -56,7 +61,12 @@ inline void FastGzipString(const string& uncompressed, string* compressed) {
                           reinterpret_cast<const char*>(uncompressed.data()),
                           uncompressed.size());
 }
-
+/**
+ * @brief 快速解压字符串
+ * 
+ * @param compressed 
+ * @param decompressed 
+ */
 inline void FastGunzipString(const string& compressed, string* decompressed) {
   boost::iostreams::filtering_ostream out;
   out.push(boost::iostreams::gzip_decompressor());

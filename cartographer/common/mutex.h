@@ -57,11 +57,22 @@ namespace common {
 
 // Defines an annotated mutex that can only be locked through its scoped locker
 // implementation.
+/**
+ * @brief 定义互斥信号量mutex，用于线程同步
+ * 
+ */
 class CAPABILITY("mutex") Mutex {
  public:
   // A RAII class that acquires a mutex in its constructor, and
   // releases it in its destructor. It also implements waiting functionality on
   // conditions that get checked whenever the mutex is released.
+  /**
+   * @brief 定义互斥锁（内部类)
+   * 在构造函数中对mutex上锁，在析构函数中对mutex解锁
+   * Locker类提供2个成员函数Await()和AwaitWithTimeout()
+   * 功能是利用c++11的条件变量和unique_lock实现在谓词predicate为真的情况下对mutex解锁
+   * 
+   */
   class SCOPED_CAPABILITY Locker {
    public:
     Locker(Mutex* mutex) ACQUIRE(mutex) : mutex_(mutex), lock_(mutex->mutex_) {}
@@ -70,12 +81,20 @@ class CAPABILITY("mutex") Mutex {
       lock_.unlock();
       mutex_->condition_.notify_all();
     }
-
+    /**
+     * @brief 阻塞当前线程并等待，等互斥锁被释放后继续执行
+     * 
+     * @tparam Predicate 
+     */
     template <typename Predicate>
     void Await(Predicate predicate) REQUIRES(this) {
       mutex_->condition_.wait(lock_, predicate);
     }
-
+    /**
+     * @brief 阻塞并等待，超时则返回false
+     * 
+     * @tparam Predicate 
+     */
     template <typename Predicate>
     bool AwaitWithTimeout(Predicate predicate, common::Duration timeout)
         REQUIRES(this) {

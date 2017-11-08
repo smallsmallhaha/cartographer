@@ -25,12 +25,19 @@
 
 namespace cartographer {
 namespace common {
-
+/**
+ * @brief 0001年1月1日到1970年1月1日所经历的秒数
+ * 
+ */
 constexpr int64 kUtsEpochOffsetFromUnixEpochInSeconds =
     (719162ll * 24ll * 60ll * 60ll);
 
 struct UniversalTimeScaleClock {
   using rep = int64;
+  /**
+   * @brief 周期为 100ns
+   * 
+   */
   using period = std::ratio<1, 10000000>;
   using duration = std::chrono::duration<rep, period>;
   using time_point = std::chrono::time_point<UniversalTimeScaleClock>;
@@ -40,7 +47,15 @@ struct UniversalTimeScaleClock {
 // Represents Universal Time Scale durations and timestamps which are 64-bit
 // integers representing the 100 nanosecond ticks since the Epoch which is
 // January 1, 1 at the start of day in UTC.
+/**
+ * @brief 时间间隔，单位:100ns
+ * 
+ */
 using Duration = UniversalTimeScaleClock::duration;
+/**
+ * @brief 时刻，单位:100ns
+ * 
+ */
 using Time = UniversalTimeScaleClock::time_point;
 
 // Convenience functions to create common::Durations.
@@ -51,9 +66,21 @@ Duration FromMilliseconds(int64 milliseconds);
 double ToSeconds(Duration duration);
 
 // Creates a time from a Universal Time Scale.
+/**
+ * @brief 时间转换
+ * 
+ * @param ticks 单位:100ns
+ * @return Time Time对象
+ */
 Time FromUniversal(int64 ticks);
 
 // Outputs the Universal Time Scale timestamp for a given Time.
+/**
+ * @brief 时间转换
+ * 
+ * @param time 单位:100ns
+ * @return int64 Time对象
+ */
 int64 ToUniversal(Time time);
 
 // For logging and unit tests, outputs the timestamp integer.

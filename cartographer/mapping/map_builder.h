@@ -47,6 +47,10 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 
 // Wires up the complete SLAM stack with TrajectoryBuilders (for local submaps)
 // and a SparsePoseGraph for loop closure.
+/**
+ * @brief 地图构建类,可被cartographer_ros的MapBuilderBridge调用,是SLAM外设和算法交流的接口
+ * 
+ */
 class MapBuilder {
  public:
   MapBuilder(const proto::MapBuilderOptions& options);
@@ -89,14 +93,18 @@ class MapBuilder {
   mapping::SparsePoseGraph* sparse_pose_graph();
 
  private:
+  // 建图选项,可以选择2D/3D,指定线程池线程数等
   const proto::MapBuilderOptions options_;
+  // 线程池
   common::ThreadPool thread_pool_;
 
   std::unique_ptr<mapping_2d::SparsePoseGraph> sparse_pose_graph_2d_;
   std::unique_ptr<mapping_3d::SparsePoseGraph> sparse_pose_graph_3d_;
   mapping::SparsePoseGraph* sparse_pose_graph_;
-
+  
+  // 传感器操作集合
   sensor::Collator sensor_collator_;
+  // trajectory_builders_ !!!非常重要
   std::vector<std::unique_ptr<mapping::TrajectoryBuilder>> trajectory_builders_;
 };
 

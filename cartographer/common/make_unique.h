@@ -28,26 +28,39 @@ namespace common {
 // Implementation of c++14's std::make_unique, taken from
 // https://isocpp.org/files/papers/N3656.txt
 /**
- * @brief std::make_unique实现
- * 构造 T 类型对象并将其包装进 std::unique_ptr
+ * @brief typename _Unique_if<T>::_Single_object make_unique()的辅助函数
+ * 
  * @tparam T 
  */
 template <class T>
 struct _Unique_if {
   typedef std::unique_ptr<T> _Single_object;
 };
-
+/**
+ * @brief typename _Unique_if<T[]>::_Single_object make_unique()的辅助函数
+ * 
+ * @tparam T 
+ */
 template <class T>
 struct _Unique_if<T[]> {
   typedef std::unique_ptr<T[]> _Unknown_bound;
 };
-
+/**
+ * @brief typename _Unique_if<T[N]>::_Single_object make_unique()的辅助函数
+ * 
+ * @tparam T 
+ */
 template <class T, size_t N>
 struct _Unique_if<T[N]> {
   typedef void _Known_bound;
 };
 /**
- * @brief make_unique<T>
+ * @brief make_unique实现,使用方式:unique_ptr<string> p=common::make_unique<string>(6,'z');
+ * 
+ * @details 使用c++11的完美转发功能std::forward()
+ *          请特别注意实现中的new T(std::forward<Args>(args)...)
+ *          其中 std::forward<Args>(args)为展开模式,...为展开包
+ *          该句可以展开为 new T(std::forward<Args>(arg1),std::forward<Args>(arg2),...)
  * 
  * @tparam T 
  * @tparam Args 
@@ -57,7 +70,7 @@ typename _Unique_if<T>::_Single_object make_unique(Args&&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 /**
- * @brief make_unique<T[]>
+ * @brief  make_unique实现,使用方式:unique_ptr<int[]> p=common::make_unique<int[]>(6);
  * 
  * @tparam T 
  */
@@ -66,7 +79,12 @@ typename _Unique_if<T>::_Unknown_bound make_unique(size_t n) {
   typedef typename std::remove_extent<T>::type U;
   return std::unique_ptr<T>(new U[n]());
 }
-
+/**
+ * @brief 禁用
+ * 
+ * @tparam T 
+ * @tparam Args 
+ */
 template <class T, class... Args>
 typename _Unique_if<T>::_Known_bound make_unique(Args&&...) = delete;
 

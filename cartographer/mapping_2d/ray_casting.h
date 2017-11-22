@@ -30,6 +30,15 @@ namespace mapping_2d {
 
 // For each ray in 'range_data', inserts hits and misses into
 // 'probability_grid'. Hits are handled before misses.
+/**
+ * @brief 遍历每一条射线数据,将hits和misses插入概率格网
+ * 
+ * @param range_data 
+ * @param hit_table 
+ * @param miss_table 
+ * @param insert_free_space 
+ * @param probability_grid 
+ */
 void CastRays(const sensor::RangeData& range_data,
               const std::vector<uint16>& hit_table,
               const std::vector<uint16>& miss_table, bool insert_free_space,

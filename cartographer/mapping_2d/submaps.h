@@ -42,6 +42,10 @@ ProbabilityGrid ComputeCroppedProbabilityGrid(
 proto::SubmapsOptions CreateSubmapsOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
+/**
+ * @brief 子图,含有位姿信息和概率格网
+ * 
+ */
 class Submap : public mapping::Submap {
  public:
   Submap(const MapLimits& limits, const Eigen::Vector2f& origin);

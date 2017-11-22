@@ -60,6 +60,11 @@ class ProbabilityGrid {
   }
 
   // Returns the limits of this ProbabilityGrid.
+  /**
+   * @brief 返回概率格网边界
+   * 
+   * @return const MapLimits& 
+   */
   const MapLimits& limits() const { return limits_; }
 
   // Finishes the update sequence.
@@ -73,6 +78,12 @@ class ProbabilityGrid {
 
   // Sets the probability of the cell at 'cell_index' to the given
   // 'probability'. Only allowed if the cell was unknown before.
+  /**
+   * @brief 设置概率格网点的值
+   * 
+   * @param cell_index 
+   * @param probability 
+   */
   void SetProbability(const Eigen::Array2i& cell_index,
                       const float probability) {
     uint16& cell = cells_[ToFlatIndex(cell_index)];
@@ -104,6 +115,12 @@ class ProbabilityGrid {
   }
 
   // Returns the probability of the cell with 'cell_index'.
+  /**
+   * @brief 获取格网点概率值
+   * 
+   * @param cell_index 
+   * @return float 
+   */
   float GetProbability(const Eigen::Array2i& cell_index) const {
     if (limits_.Contains(cell_index)) {
       return mapping::ValueToProbability(cells_[ToFlatIndex(cell_index)]);
@@ -112,6 +129,13 @@ class ProbabilityGrid {
   }
 
   // Returns true if the probability at the specified index is known.
+  /**
+   * @brief 格网点概率是否已知
+   * 
+   * @param cell_index 
+   * @return true 
+   * @return false 
+   */
   bool IsKnown(const Eigen::Array2i& cell_index) const {
     return limits_.Contains(cell_index) &&
            cells_[ToFlatIndex(cell_index)] != mapping::kUnknownProbabilityValue;
@@ -119,6 +143,12 @@ class ProbabilityGrid {
 
   // Fills in 'offset' and 'limits' to define a subregion of that contains all
   // known cells.
+  /**
+   * @brief 计算已知格网点的边界
+   * 
+   * @param offset 
+   * @param limits 
+   */
   void ComputeCroppedLimits(Eigen::Array2i* const offset,
                             CellLimits* const limits) const {
     if (known_cells_box_.isEmpty()) {
@@ -134,6 +164,11 @@ class ProbabilityGrid {
   // Grows the map as necessary to include 'point'. This changes the meaning of
   // these coordinates going forward. This method must be called immediately
   // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
+  /**
+   * @brief 扩大边界
+   * 
+   * @param point 
+   */
   void GrowLimits(const Eigen::Vector2f& point) {
     CHECK(update_indices_.empty());
     while (!limits_.Contains(limits_.GetCellIndex(point))) {

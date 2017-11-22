@@ -31,6 +31,10 @@
 namespace cartographer {
 namespace mapping_2d {
 
+/**
+ * @brief 格网大小,成员: num_x_cells, num_y_cells
+ * 
+ */
 struct CellLimits {
   CellLimits() = default;
   CellLimits(int init_num_x_cells, int init_num_y_cells)
@@ -52,6 +56,10 @@ inline proto::CellLimits ToProto(const CellLimits& cell_limits) {
 }
 
 // Iterates in row-major order through a range of xy-indices.
+/**
+ * @brief 迭代器，用于遍历某整型区域
+ * 
+ */
 class XYIndexRangeIterator
     : public std::iterator<std::input_iterator_tag, Eigen::Array2i> {
  public:

@@ -37,6 +37,10 @@ namespace mapping_2d {
 
 // Defines the limits of a grid map. This class must remain inlined for
 // performance reasons.
+/**
+ * @brief 定义地图区域(角点和大小),分辨率
+ * 
+ */
 class MapLimits {
  public:
   MapLimits(const double resolution, const Eigen::Vector2d& max,

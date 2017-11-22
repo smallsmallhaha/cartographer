@@ -34,6 +34,10 @@ namespace mapping_2d {
 proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
+/**
+ * @brief 将点云数据插入概率格网
+ * 
+ */
 class RangeDataInserter {
  public:
   explicit RangeDataInserter(const proto::RangeDataInserterOptions& options);

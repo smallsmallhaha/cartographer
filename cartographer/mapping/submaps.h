@@ -57,6 +57,10 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
 // track of how many range data were inserted into it, and sets the
 // 'finished_probability_grid' to be used for loop closing once the map no
 // longer changes.
+/**
+ * @brief 子图,含有位姿信息,用于回环检测
+ * 
+ */
 class Submap {
  public:
   Submap(const transform::Rigid3d& local_pose) : local_pose_(local_pose) {}

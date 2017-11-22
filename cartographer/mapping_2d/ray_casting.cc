@@ -22,6 +22,10 @@ namespace mapping_2d {
 namespace {
 
 // Factor for subpixel accuracy of start and end point.
+/**
+ * @brief 激光开始点和结束点的精度因子
+ * 
+ */
 constexpr int kSubpixelScale = 1000;
 
 // We divide each pixel in kSubpixelScale x kSubpixelScale subpixels. 'begin'
@@ -42,6 +46,10 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 
   // Special case: We have to draw a vertical line in full pixels, as 'begin'
   // and 'end' have the same full pixel x coordinate.
+  /**
+   * @brief 特例,激光与y轴垂直
+   * 
+   */
   if (begin.x() / kSubpixelScale == end.x() / kSubpixelScale) {
     Eigen::Array2i current(begin.x() / kSubpixelScale,
                            std::min(begin.y(), end.y()) / kSubpixelScale);
@@ -146,6 +154,12 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
   CHECK_EQ(current.y(), end.y() / kSubpixelScale);
 }
 
+/**
+ * @brief 根据观测激光数据扩展概率格网范围
+ * 
+ * @param range_data 
+ * @param probability_grid 
+ */
 void GrowAsNeeded(const sensor::RangeData& range_data,
                   ProbabilityGrid* const probability_grid) {
   Eigen::AlignedBox2f bounding_box(range_data.origin.head<2>());

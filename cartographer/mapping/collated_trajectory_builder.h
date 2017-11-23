@@ -36,6 +36,10 @@ namespace mapping {
 
 // Handles collating sensor data using a sensor::Collator, then passing it on to
 // a mapping::GlobalTrajectoryBuilderInterface which is common for 2D and 3D.
+/**
+ * @brief 处理传感器,将其交付给mapping::GlobalTrajectoryBuilderInterface接口
+ * 
+ */
 class CollatedTrajectoryBuilder : public TrajectoryBuilder {
  public:
   CollatedTrajectoryBuilder(

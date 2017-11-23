@@ -38,7 +38,7 @@ class Data {
       mapping::GlobalTrajectoryBuilderInterface* trajectory_builder) = 0;
 };
 /**
- * @brief 分发距离测量数据
+ * @brief 分发距离测量数据到global_trajectory_builder接口
  * 
  */
 class DispatchableRangefinderData : public Data {
@@ -60,7 +60,7 @@ class DispatchableRangefinderData : public Data {
   const PointCloud ranges_;
 };
 /**
- * @brief 分发除点云外的其它数据（例如IMU，Odom等）
+ * @brief 分发除点云外的其它数据（例如IMU，Odom等）到global_trajectory_builder接口
  * 
  * @tparam DataType 
  */

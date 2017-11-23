@@ -39,6 +39,12 @@ namespace mapping {
 // global SLAM stack, i.e. local SLAM for initial pose estimates, scan matching
 // to detect loop closure, and a sparse pose graph optimization to compute
 // optimized pose estimates.
+/**
+ * @brief 全局接口
+ * 
+ * @details 本接口用于2D好3D SLAM,实现了一个全局SLAM栈,例如:使用惯性姿态估计的局部SLAM,使用扫描匹配的闭环检测,使用稀疏位姿图的全局位姿估计优化
+ * 
+ */
 class GlobalTrajectoryBuilderInterface {
  public:
   GlobalTrajectoryBuilderInterface() {}

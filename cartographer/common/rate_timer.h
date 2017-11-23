@@ -38,6 +38,11 @@ class RateTimer {
  public:
   // Computes the rate at which pulses come in over 'window_duration' in wall
   // time.
+  /**
+   * @brief 构造函数
+   * 
+   * @param window_duration 采样事件窗口时间间隔(上限)
+   */
   explicit RateTimer(const common::Duration window_duration)
       : window_duration_(window_duration) {}
   ~RateTimer() {}
@@ -46,6 +51,11 @@ class RateTimer {
   RateTimer& operator=(const RateTimer&) = delete;
 
   // Returns the pulse rate in Hz.
+  /**
+   * @brief 计算采样频率,单位:Hz
+   * 
+   * @return double 
+   */
   double ComputeRate() const {
     if (events_.empty()) {
       return 0.;
@@ -57,6 +67,11 @@ class RateTimer {
   // Returns the ratio of the pulse rate (with supplied times) to the wall time
   // rate. For example, if a sensor produces pulses at 10 Hz, but we call Pulse
   // at 20 Hz wall time, this will return 2.
+  /**
+   * @brief 计算采样频率和传感器数据频率之比
+   * 
+   * @return double 
+   */
   double ComputeWallTimeRateRatio() const {
     if (events_.empty()) {
       return 0.;
@@ -68,6 +83,11 @@ class RateTimer {
   }
 
   // Records an event that will contribute to the computed rate.
+  /**
+   * @brief 记录采样事件(sensor_time,wall_time)
+   * 
+   * @param time 
+   */
   void Pulse(common::Time time) {
     events_.push_back(Event{time, ClockType::now()});
     while (events_.size() > 2 &&
@@ -96,6 +116,11 @@ class RateTimer {
   };
 
   // Computes all differences in seconds between consecutive pulses.
+  /**
+   * @brief 计算采样的时间间隔
+   * 
+   * @return std::vector<double> 
+   */
   std::vector<double> ComputeDeltasInSeconds() const {
     CHECK_GT(events_.size(), 1);
     const size_t count = events_.size() - 1;

@@ -94,9 +94,11 @@ void OrderedMultiQueue::Dispatch() {
     const Data* next_data = nullptr;
     Queue* next_queue = nullptr;
     QueueKey next_queue_key;
+    // !!!遍历所有传感器数据队列,获取下一个时间点的数据
     for (auto it = queues_.begin(); it != queues_.end();) {
+      // 获取某传感器数据队列的第一个数据
       const auto* data = it->second.queue.Peek<Data>();
-      if (data == nullptr) {
+      if (data == nullptr) { // 数据队列为空
         if (it->second.finished) {
           queues_.erase(it++);
           continue;
@@ -104,7 +106,7 @@ void OrderedMultiQueue::Dispatch() {
         CannotMakeProgress(it->first);
         return;
       }
-      if (next_data == nullptr || data->GetTime() < next_data->GetTime()) {
+      if (next_data == nullptr || data->GetTime() < next_data->GetTime()) { // 获取当前数据
         next_data = data;
         next_queue = &it->second;
         next_queue_key = it->first;
@@ -120,14 +122,18 @@ void OrderedMultiQueue::Dispatch() {
 
     // If we haven't dispatched any data for this trajectory yet, fast forward
     // all queues of this trajectory until a common start time has been reached.
+    // 获取公共开始时间,保证调度在所有数据都齐全后才开始进行
+    // !!!注意: 每个trajectory的公共开始时间只在第一次被刷新
     const common::Time common_start_time =
         GetCommonStartTime(next_queue_key.trajectory_id);
 
     if (next_data->GetTime() >= common_start_time) {
       // Happy case, we are beyond the 'common_start_time' already.
+      // 理想情况,直接调用回调函数
       last_dispatched_time_ = next_data->GetTime();
       next_queue->callback(next_queue->queue.Pop());
     } else if (next_queue->queue.Size() < 2) {
+      // 当前队列快要空了(可能已经快没有数据了)
       if (!next_queue->finished) {
         // We cannot decide whether to drop or dispatch this yet.
         CannotMakeProgress(next_queue_key);
@@ -139,6 +145,10 @@ void OrderedMultiQueue::Dispatch() {
       // We take a peek at the time after next data. If it also is not beyond
       // 'common_start_time' we drop 'next_data', otherwise we just found the
       // first packet to dispatch from this queue.
+      /**
+       * @brief 如果数据在初始时间之前则可视为无效,可丢弃数据
+       * 
+       */
       std::unique_ptr<Data> next_data_owner = next_queue->queue.Pop();
       if (next_queue->queue.Peek<Data>()->GetTime() > common_start_time) {
         last_dispatched_time_ = next_data->GetTime();
@@ -159,6 +169,12 @@ void OrderedMultiQueue::CannotMakeProgress(const QueueKey& queue_key) {
 }
 
 common::Time OrderedMultiQueue::GetCommonStartTime(const int trajectory_id) {
+  /**
+   * @brief 尝试插入数据,如果插入失败,则返回与插入数据相冲突的数据
+   * 
+   * @details 例如 map<int,int> m;m[1]=1;m[2]=[2]; m.emplace(2,4).first 为m[2]对应的迭代器
+   * 
+   */
   auto emplace_result = common_start_time_per_trajectory_.emplace(
       trajectory_id, common::Time::min());
   common::Time& common_start_time = emplace_result.first->second;

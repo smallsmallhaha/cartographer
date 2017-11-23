@@ -47,7 +47,7 @@ struct QueueKey {
 //
 // This class is thread-compatible.
 /**
- * @brief 线程安全的有序多重队列
+ * @brief 线程安全的有序多重队列,用于储存传感器数据
  * 
  */
 class OrderedMultiQueue {
@@ -59,14 +59,31 @@ class OrderedMultiQueue {
 
   // Adds a new queue with key 'queue_key' which must not already exist.
   // 'callback' will be called whenever data from this queue can be dispatched.
+  /**
+   * @brief 增加传感器和相应的消息回调函数
+   * 
+   * @param queue_key 
+   * @param callback 
+   */
   void AddQueue(const QueueKey& queue_key, Callback callback);
 
   // Marks a queue as finished, i.e. no further data can be added. The queue
   // will be removed once the last piece of data from it has been dispatched.
+  /**
+   * @brief 停止指定队列,即停止接收该传感器数据
+   * 
+   * @param queue_key 
+   */
   void MarkQueueAsFinished(const QueueKey& queue_key);
 
   // Adds 'data' to a queue with the given 'queue_key'. Data must be added
   // sorted per queue.
+  /**
+   * @brief 添加传感器观测数据至队尾,通过调用相应的回调函数处理消息
+   * 
+   * @param queue_key 
+   * @param data 
+   */
   void Add(const QueueKey& queue_key, std::unique_ptr<Data> data);
 
   // Dispatches all remaining values in sorted order and removes the underlying
@@ -85,13 +102,33 @@ class OrderedMultiQueue {
     bool finished = false;
   };
 
+  /**
+   * @brief 处理传感器数据队列 (!!!此处会调用回调函数)
+   * 
+   */
   void Dispatch();
   void CannotMakeProgress(const QueueKey& queue_key);
+  /**
+   * @brief 获得trajectory的公共开始时间,以最晚收到的传感器数据包时间为准
+   * 
+   * @param trajectory_id 
+   * @return common::Time 
+   */
   common::Time GetCommonStartTime(int trajectory_id);
 
   // Used to verify that values are dispatched in sorted order.
+  /**
+   * @brief 上一次调度时间
+   * 
+   */
   common::Time last_dispatched_time_ = common::Time::min();
 
+  /**
+   * @brief trajectory的公共开始时间,取该trajectory的所有传感器首个消息时间戳的最大值为公共开始时间
+   * 
+   * @details 
+   * 
+   */
   std::map<int, common::Time> common_start_time_per_trajectory_;
   std::map<QueueKey, Queue> queues_;
   QueueKey blocker_;

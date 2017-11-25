@@ -23,10 +23,15 @@ namespace common {
 namespace {
 
 TEST(RateTimerTest, ComputeRate) {
+  /**
+   * @brief 本测试计算了数据包的采样频率
+   * 
+   */
   RateTimer<> rate_timer(common::FromSeconds(1.));
   common::Time time = common::FromUniversal(42);
   for (int i = 0; i < 100; ++i) {
     rate_timer.Pulse(time);
+    // 表示每0.1s采集到一个数据包
     time += common::FromSeconds(0.1);
   }
   EXPECT_NEAR(10., rate_timer.ComputeRate(), 1e-3);
@@ -45,12 +50,23 @@ struct SimulatedClock {
 
 SimulatedClock::time_point SimulatedClock::time;
 
+/**
+ * @brief 使用模拟时钟模拟 处理频率和采样频率之比
+ * 
+ * @details 例如,当你按正常速度播放一个bag,立即处理,那么该值将为1
+ *          当你按1.5倍速播放一个bag包时,立即处理,那么该值将为1.5
+ * 
+ * @param RateTimerTest 
+ * @param ComputeWallTimeRateRatio 
+ */
 TEST(RateTimerTest, ComputeWallTimeRateRatio) {
   common::Time time = common::FromUniversal(42);
   RateTimer<SimulatedClock> rate_timer(common::FromSeconds(1.));
   for (int i = 0; i < 100; ++i) {
     rate_timer.Pulse(time);
+    // 10Hz 的数据包
     time += common::FromSeconds(0.1);
+    // 20Hz 的处理速度
     SimulatedClock::time +=
         std::chrono::duration_cast<SimulatedClock::duration>(
             std::chrono::duration<double>(0.05));

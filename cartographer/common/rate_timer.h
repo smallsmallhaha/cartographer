@@ -33,6 +33,11 @@ namespace cartographer {
 namespace common {
 
 // Computes the rate at which pulses come in.
+/**
+ * @brief 采样器类,统计数据频率和处理频率,一般是1:1
+ * 
+ * @tparam std::chrono::steady_clock 
+ */
 template <typename ClockType = std::chrono::steady_clock>
 class RateTimer {
  public:
@@ -52,7 +57,7 @@ class RateTimer {
 
   // Returns the pulse rate in Hz.
   /**
-   * @brief 计算采样频率,单位:Hz
+   * @brief 计算数据包中固有的采样频率,单位:Hz
    * 
    * @return double 
    */
@@ -68,7 +73,7 @@ class RateTimer {
   // rate. For example, if a sensor produces pulses at 10 Hz, but we call Pulse
   // at 20 Hz wall time, this will return 2.
   /**
-   * @brief 计算采样频率和传感器数据频率之比
+   * @brief 计算将数据包交付上层的频率(处理频率)和传感器数据频率之比
    * 
    * @return double 
    */
@@ -92,9 +97,22 @@ class RateTimer {
     events_.push_back(Event{time, ClockType::now()});
     while (events_.size() > 2 &&
            (events_.back().wall_time - events_.front().wall_time) >
+           // 这样写是有问题的,因为这里的大于号比较的只是两个Duration的tick值.
+           // 例如,当你使用默认时钟的时候,大于号左侧的表示有几个1ns,右侧是有几个100ns
+           // 这样比较相当于把设定的窗口增加了
                window_duration_) {
+    //  std::cout << "loop ";
       events_.pop_front();
     }
+    /*
+    printf("delta_wall_time:%ld delta_pack_time:%ld win:%ld cur_time:%ld event_num:%ld\n",
+           (events_.back().wall_time - events_.front().wall_time).count(),
+           (events_.back().time - events_.front().time).count(),
+           window_duration_.count(),
+           ClockType::now().time_since_epoch().count(),
+           events_.size()           
+    );
+    */
   }
 
   // Returns a debug string representation.

@@ -67,11 +67,13 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
                      common::FromSeconds(kSensorDataRatesLoggingPeriodSeconds)))
              .first;
   }
+  // 以15s为时间窗口,统计数据包频率和处理频率
   it->second.Pulse(data->GetTime());
 
   if (std::chrono::steady_clock::now() - last_logging_time_ >
       common::FromSeconds(kSensorDataRatesLoggingPeriodSeconds)) {
     for (const auto& pair : rate_timers_) {
+      // 输出数据包的处理速率和实际速率信息
       LOG(INFO) << pair.first << " rate: " << pair.second.DebugString();
     }
     last_logging_time_ = std::chrono::steady_clock::now();

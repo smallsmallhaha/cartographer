@@ -37,6 +37,10 @@ namespace cartographer {
 namespace mapping_2d {
 
 // Represents a 2D grid of probabilities.
+/**
+ * @brief 2D概率格网
+ * 
+ */
 class ProbabilityGrid {
  public:
   explicit ProbabilityGrid(const MapLimits& limits)
@@ -68,6 +72,10 @@ class ProbabilityGrid {
   const MapLimits& limits() const { return limits_; }
 
   // Finishes the update sequence.
+  /**
+   * @brief 停止更新,主要是删除该点的kUpdataMarker标记
+   * 
+   */
   void FinishUpdate() {
     while (!update_indices_.empty()) {
       DCHECK_GE(cells_[update_indices_.back()], mapping::kUpdateMarker);
@@ -79,7 +87,9 @@ class ProbabilityGrid {
   // Sets the probability of the cell at 'cell_index' to the given
   // 'probability'. Only allowed if the cell was unknown before.
   /**
-   * @brief 设置概率格网点的值
+   * @brief 设置未知格网点的概率值,更新已知概率格网中的已知区域边界
+   * 
+   * !!! 注意: 每一个格网点只能调用一次该函数
    * 
    * @param cell_index 
    * @param probability 
@@ -99,14 +109,30 @@ class ProbabilityGrid {
   //
   // If this is the first call to ApplyOdds() for the specified cell, its value
   // will be set to probability corresponding to 'odds'.
+  /**
+   * @brief 应用查找表,更新格网点的概率值
+   * 
+   * 公式: M_new = OddsInv( odds * Odds( M_old ) )
+   * 详情请看论文
+   * 
+   * @param cell_index 
+   * @param table 
+   * @return true 
+   * @return false 
+   */
   bool ApplyLookupTable(const Eigen::Array2i& cell_index,
                         const std::vector<uint16>& table) {
     DCHECK_EQ(table.size(), mapping::kUpdateMarker);
     const int flat_index = ToFlatIndex(cell_index);
+    // 获取格网点概率值(uint16)
     uint16& cell = cells_[flat_index];
+    // 若已经设定完概率值,则直接返回false
     if (cell >= mapping::kUpdateMarker) {
       return false;
     }
+    // 若还未设定概率值,需要对格网点概率值进行更新,并且添加到update_indices_队列
+    // 这样做是为了 当你直接调用ApplyLookupTable多次对一个点进行更新时,保证只有第一个调用是有效的
+    // 要想多次更新,需要调用FinishUpdate"解开"对已更新单元格的锁
     update_indices_.push_back(flat_index);
     cell = table[cell];
     DCHECK_GE(cell, mapping::kUpdateMarker);
@@ -116,7 +142,7 @@ class ProbabilityGrid {
 
   // Returns the probability of the cell with 'cell_index'.
   /**
-   * @brief 获取格网点概率值
+   * @brief 获取格网点概率值,从 [0-2^16-1]>>1 到 [0.1,0.9] 的映射
    * 
    * @param cell_index 
    * @return float 
@@ -165,13 +191,16 @@ class ProbabilityGrid {
   // these coordinates going forward. This method must be called immediately
   // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
   /**
-   * @brief 扩大边界
+   * @brief 扩大边界,直到概率格网内包含点point
+   * 
+   * 必须在FinishUpdate()立即调用,在调用ApplyLookupTable之前调用
    * 
    * @param point 
    */
   void GrowLimits(const Eigen::Vector2f& point) {
     CHECK(update_indices_.empty());
     while (!limits_.Contains(limits_.GetCellIndex(point))) {
+      // 每次边界的角点增加resolution * num_cells / 2,总面积扩展到之前的四倍
       const int x_offset = limits_.cell_limits().num_x_cells / 2;
       const int y_offset = limits_.cell_limits().num_y_cells / 2;
       const MapLimits new_limits(
@@ -220,6 +249,7 @@ class ProbabilityGrid {
 
  private:
   // Converts a 'cell_index' into an index into 'cells_'.
+  // 注意: cells_为列优先数组
   int ToFlatIndex(const Eigen::Array2i& cell_index) const {
     CHECK(limits_.Contains(cell_index)) << cell_index;
     return limits_.cell_limits().num_x_cells * cell_index.y() + cell_index.x();

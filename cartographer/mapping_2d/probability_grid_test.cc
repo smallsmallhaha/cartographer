@@ -56,6 +56,12 @@ TEST(ProbabilityGridTest, ToProto) {
   // {min, max}_{x, y}_ gracefully.
 }
 
+/**
+ * @brief 测试和演示概率格网的更新概率功能
+ * 
+ * @param ProbabilityGridTest 
+ * @param ApplyOdds 
+ */
 TEST(ProbabilityGridTest, ApplyOdds) {
   ProbabilityGrid probability_grid(
       MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)));
@@ -65,17 +71,25 @@ TEST(ProbabilityGridTest, ApplyOdds) {
   EXPECT_TRUE(limits.Contains(Eigen::Array2i(0, 1)));
   EXPECT_TRUE(limits.Contains(Eigen::Array2i(1, 0)));
   EXPECT_TRUE(limits.Contains(Eigen::Array2i(1, 1)));
+  // 所有格网点的概率还未知
   EXPECT_FALSE(probability_grid.IsKnown(Eigen::Array2i(0, 0)));
   EXPECT_FALSE(probability_grid.IsKnown(Eigen::Array2i(0, 1)));
   EXPECT_FALSE(probability_grid.IsKnown(Eigen::Array2i(1, 0)));
   EXPECT_FALSE(probability_grid.IsKnown(Eigen::Array2i(1, 1)));
 
+  // 使用方法:
+  // 1. SetProbability()
+  // 2. ApplyLookupTable()
+  // 3. FinishUpdate()
+  // 设置(1,0)处概率为0.5
   probability_grid.SetProbability(Eigen::Array2i(1, 0), 0.5);
 
+  // 应用查找表
   probability_grid.ApplyLookupTable(
       Eigen::Array2i(1, 0),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9)));
   probability_grid.FinishUpdate();
+  // 停止更新
   EXPECT_GT(probability_grid.GetProbability(Eigen::Array2i(1, 0)), 0.5);
 
   probability_grid.SetProbability(Eigen::Array2i(0, 1), 0.5);
@@ -86,6 +100,16 @@ TEST(ProbabilityGridTest, ApplyOdds) {
   probability_grid.FinishUpdate();
   EXPECT_LT(probability_grid.GetProbability(Eigen::Array2i(0, 1)), 0.5);
 
+  /**
+   * @brief 异常情况测试
+   * 
+   * 测试对一个未设定概率的单元格使用ApplyLookupTable()
+   *   结果: 单元格的概率值变为p
+   * 
+   * 测试重复对一个单元格使用ApplyLookupTable()
+   *   结果: 只有第一个ApplyLookupTable是有效的
+   * 
+   */
   // Tests adding odds to an unknown cell.
   probability_grid.ApplyLookupTable(
       Eigen::Array2i(1, 1),
@@ -133,6 +157,12 @@ TEST(ProbabilityGridTest, GetProbability) {
   }
 }
 
+/**
+ * @brief 测试概率格网的地图边界操作函数
+ * 
+ * @param ProbabilityGridTest 
+ * @param GetCellIndex 
+ */
 TEST(ProbabilityGridTest, GetCellIndex) {
   ProbabilityGrid probability_grid(
       MapLimits(2., Eigen::Vector2d(8., 14.), CellLimits(14, 8)));

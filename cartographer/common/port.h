@@ -41,6 +41,13 @@ namespace common {
 
 inline int RoundToInt(const float x) { return std::lround(x); }
 
+/**
+ * @brief 取整函数,最临近取整,0.5处正数向上取证,负数向下取证,e.g. -0.5->-1 0.5->1
+ * 
+ * @details 注意,若使用RoundToInt(x-0.5),则正数使用去尾法,负数使用进一法,0取-1,e.g. 1.8->1 -1.8->-2 0->-1
+ * @param x 
+ * @return int 
+ */
 inline int RoundToInt(const double x) { return std::lround(x); }
 
 inline int64 RoundToInt64(const float x) { return std::lround(x); }

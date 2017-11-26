@@ -40,6 +40,10 @@ namespace mapping_2d {
 /**
  * @brief 定义地图区域(角点和大小),分辨率
  * 
+ * @details max_为普通xy坐标系的右上角点,cell_limits_表示格网坐标系的边界,由两个整型数字表示
+ * 格网坐标系以max_为原点,以x轴反方向为y',以y轴反方向为x'
+ * e.g. resolution = 1, max = (10,10) 时, 坐标 (8,9) 对应的是 (1,2)
+ * 
  */
 class MapLimits {
  public:

@@ -17,6 +17,7 @@ include "sparse_pose_graph.lua"
 MAP_BUILDER = {
   use_trajectory_builder_2d = false,
   use_trajectory_builder_3d = false,
+  -- 线程池工作线程个数
   num_background_threads = 4,
   sparse_pose_graph = SPARSE_POSE_GRAPH,
 }

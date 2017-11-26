@@ -59,6 +59,8 @@ inline proto::CellLimits ToProto(const CellLimits& cell_limits) {
 /**
  * @brief 迭代器，用于遍历某整型区域
  * 
+ * 用法 for( Eigen::Array2i& xy_index : XYIndexRangeIterator( Eigen::Array2i(1,4),Eigen::Array2i(2,5) ) )
+ * 
  */
 class XYIndexRangeIterator
     : public std::iterator<std::input_iterator_tag, Eigen::Array2i> {

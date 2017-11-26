@@ -13,11 +13,18 @@
 -- limitations under the License.
 
 TRAJECTORY_BUILDER_2D = {
+  -- 是否使用IMU数据
   use_imu_data = true,
+  -- 最小距离,低于此距离的测量数据直接被丢弃
   min_range = 0.,
+  -- 最大距离,高于此距离的为miss,详见论文
+  -- 注: 只有处于两个距离之间的才能作为hit
   max_range = 30.,
   min_z = -0.8,
   max_z = 2.,
+  -- 当距离测量值大于max_range,通过下面公式计算miss坐标:
+  -- miss=origin+missing_data_ray_length/range*(miss-origin)
+  -- 其中,origin为原点坐标,miss为miss点的坐标,range为距离
   missing_data_ray_length = 5.,
   scans_per_accumulation = 1,
   voxel_filter_size = 0.025,
@@ -62,11 +69,16 @@ TRAJECTORY_BUILDER_2D = {
   imu_gravity_time_constant = 10.,
 
   submaps = {
+    -- 子图分辨率,单位m,主要结构为概率格网,概率表示了该格网处为实体的概率
     resolution = 0.05,
+    -- 构成每张子图的RangeData数量
     num_range_data = 90,
     range_data_inserter = {
+      -- 是否处理空区域和miss区域,若选择false则子图中只有少量hit点的信息
       insert_free_space = true,
+      -- hit概率,p_hit越大(大于0.5),则p_new=odds_inv(odds(p_hit)*odds(p_old))的速度越快
       hit_probability = 0.55,
+      -- hit概率,p_miss越小(小于0.5),则p_new=odds_inv(odds(p_miss)*odds(p_old))的速度越快
       miss_probability = 0.49,
     },
   },

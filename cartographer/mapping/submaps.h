@@ -58,7 +58,7 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
 // 'finished_probability_grid' to be used for loop closing once the map no
 // longer changes.
 /**
- * @brief 子图,含有位姿信息,用于回环检测
+ * @brief 子图,含有位姿信息
  * 
  */
 class Submap {

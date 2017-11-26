@@ -33,6 +33,8 @@ namespace mapping_2d {
 /**
  * @brief 遍历每一条射线数据,将hits和misses插入概率格网
  * 
+ * 这里使用到了超分辨率地图,这样可以提高射线穿过的格网点坐标的精度
+ * 
  * @param range_data 
  * @param hit_table 
  * @param miss_table 

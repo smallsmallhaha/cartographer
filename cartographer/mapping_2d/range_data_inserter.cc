@@ -43,6 +43,10 @@ proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
   return options;
 }
 
+/**
+ * @brief 在构造函数中初始化hit和miss的查找表,方便在Insert()中调用ApplyLookupTable()做准备
+ * 
+ */
 RangeDataInserter::RangeDataInserter(
     const proto::RangeDataInserterOptions& options)
     : options_(options),
@@ -57,6 +61,8 @@ void RangeDataInserter::Insert(const sensor::RangeData& range_data,
   // (i.e. no hits will be ignored because of a miss in the same cell).
   CastRays(range_data, hit_table_, miss_table_, options_.insert_free_space(),
            CHECK_NOTNULL(probability_grid));
+  // 在调用若干次ApplyLookupTable()后调用FinishUpdate,解开格网更新点的锁
+  // 不调用此函数,本次更新的格网点概率值在下次调用Insert()时将无法更新
   probability_grid->FinishUpdate();
 }
 

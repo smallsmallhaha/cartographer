@@ -46,6 +46,12 @@ class RangeDataInserter {
   RangeDataInserter& operator=(const RangeDataInserter&) = delete;
 
   // Inserts 'range_data' into 'probability_grid'.
+  /**
+   * @brief 将已经进行过坐标系转换后的激光测量数据插入概率格网
+   * 
+   * @param range_data 
+   * @param probability_grid 
+   */
   void Insert(const sensor::RangeData& range_data,
               ProbabilityGrid* probability_grid) const;
 

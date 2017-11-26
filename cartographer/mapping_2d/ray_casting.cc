@@ -35,6 +35,7 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
              const std::vector<uint16>& miss_table,
              ProbabilityGrid* const probability_grid) {
   // For simplicity, we order 'begin' and 'end' by their x coordinate.
+  // 为了简单一些,我们使得begin.x()<end.x()
   if (begin.x() > end.x()) {
     CastRay(end, begin, miss_table, probability_grid);
     return;
@@ -47,7 +48,7 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
   // Special case: We have to draw a vertical line in full pixels, as 'begin'
   // and 'end' have the same full pixel x coordinate.
   /**
-   * @brief 特例,激光与y轴垂直
+   * @brief 特例,激光与y轴垂直,用miss_table更新线段上所有的概率信息
    * 
    */
   if (begin.x() / kSubpixelScale == end.x() / kSubpixelScale) {
@@ -155,21 +156,24 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 }
 
 /**
- * @brief 根据观测激光数据扩展概率格网范围
+ * @brief 扩展概率格网范围,直到概率格网包含所有激光观测观测数据为止
  * 
  * @param range_data 
  * @param probability_grid 
  */
 void GrowAsNeeded(const sensor::RangeData& range_data,
                   ProbabilityGrid* const probability_grid) {
+  // 包含激光测量中心
   Eigen::AlignedBox2f bounding_box(range_data.origin.head<2>());
   constexpr float kPadding = 1e-6f;
+  // 包含hits和misses
   for (const Eigen::Vector3f& hit : range_data.returns) {
     bounding_box.extend(hit.head<2>());
   }
   for (const Eigen::Vector3f& miss : range_data.misses) {
     bounding_box.extend(miss.head<2>());
   }
+  // 扩展概率格网范围
   probability_grid->GrowLimits(bounding_box.min() -
                                kPadding * Eigen::Vector2f::Ones());
   probability_grid->GrowLimits(bounding_box.max() +
@@ -178,39 +182,49 @@ void GrowAsNeeded(const sensor::RangeData& range_data,
 
 }  // namespace
 
+// CastRays实现
 void CastRays(const sensor::RangeData& range_data,
               const std::vector<uint16>& hit_table,
               const std::vector<uint16>& miss_table,
               const bool insert_free_space,
               ProbabilityGrid* const probability_grid) {
+  // 1. 扩展概率格网范围
   GrowAsNeeded(range_data, probability_grid);
 
+  // 2. 获得超分辨率下的地图范围 单元格数量变为原来的kSubpixelScale*kSubpixelScale倍
   const MapLimits& limits = probability_grid->limits();
   const double superscaled_resolution = limits.resolution() / kSubpixelScale;
   const MapLimits superscaled_limits(
       superscaled_resolution, limits.max(),
       CellLimits(limits.cell_limits().num_x_cells * kSubpixelScale,
                  limits.cell_limits().num_y_cells * kSubpixelScale));
+  // 获得原点坐标
   const Eigen::Array2i begin =
       superscaled_limits.GetCellIndex(range_data.origin.head<2>());
   // Compute and add the end points.
   std::vector<Eigen::Array2i> ends;
   ends.reserve(range_data.returns.size());
   for (const Eigen::Vector3f& hit : range_data.returns) {
+    // 获得hit点在超分辨率坐标下的坐标
     ends.push_back(superscaled_limits.GetCellIndex(hit.head<2>()));
+    // 3. 用hit_table更新该坐标的概率
     probability_grid->ApplyLookupTable(ends.back() / kSubpixelScale, hit_table);
   }
 
   if (!insert_free_space) {
+    // 如果设置insert_free_space为false,则不处理range_data.misses数据,直接返回
+    // 概率格网将没有misses的数据
     return;
   }
 
   // Now add the misses.
+  // 4-1. 用miss_table更新orgin到ends线段上所有点的概率
   for (const Eigen::Array2i& end : ends) {
     CastRay(begin, end, miss_table, probability_grid);
   }
 
   // Finally, compute and add empty rays based on misses in the scan.
+  // 4-2. 用miss_table更新orgin到misses线段上所有点的概率
   for (const Eigen::Vector3f& missing_echo : range_data.misses) {
     CastRay(begin, superscaled_limits.GetCellIndex(missing_echo.head<2>()),
             miss_table, probability_grid);

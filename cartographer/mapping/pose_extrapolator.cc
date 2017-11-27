@@ -59,6 +59,7 @@ common::Time PoseExtrapolator::GetLastPoseTime() const {
 void PoseExtrapolator::AddPose(const common::Time time,
                                const transform::Rigid3d& pose) {
   if (imu_tracker_ == nullptr) {
+    // 如果没有imu_tracker,则初始化之    
     common::Time tracker_start = time;
     if (!imu_data_.empty()) {
       tracker_start = std::min(tracker_start, imu_data_.front().time);
@@ -67,6 +68,8 @@ void PoseExtrapolator::AddPose(const common::Time time,
         common::make_unique<ImuTracker>(gravity_time_constant_, tracker_start);
   }
   timed_pose_queue_.push_back(TimedPose{time, pose});
+  // 修剪timed_pose_queue_使得所有数据(除队尾一条)时间都在[time-pose_queue_duration_,oo]区间
+  // 注意: 最后至少也有两条消息
   while (timed_pose_queue_.size() > 2 &&
          timed_pose_queue_[1].time <= time - pose_queue_duration_) {
     timed_pose_queue_.pop_front();
@@ -181,6 +184,7 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
   if (imu_data_.empty() || time < imu_data_.front().time) {
     // There is no IMU data until 'time', so we advance the ImuTracker and use
     // the angular velocities from poses and fake gravity to help 2D stability.
+    // 模拟IMU的观测值
     imu_tracker->Advance(time);
     imu_tracker->AddImuLinearAccelerationObservation(Eigen::Vector3d::UnitZ());
     imu_tracker->AddImuAngularVelocityObservation(
@@ -192,11 +196,13 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
     // Advance to the beginning of 'imu_data_'.
     imu_tracker->Advance(imu_data_.front().time);
   }
+  // 获取时间不小于imu_tracker->time()的IMU数据
   auto it = std::lower_bound(
       imu_data_.begin(), imu_data_.end(), imu_tracker->time(),
       [](const sensor::ImuData& imu_data, const common::Time& time) {
         return imu_data.time < time;
       });
+  // 处理时间介于imu_tracker->time()和time之间的所有IMU数据
   while (it != imu_data_.end() && it->time < time) {
     imu_tracker->Advance(it->time);
     imu_tracker->AddImuLinearAccelerationObservation(it->linear_acceleration);

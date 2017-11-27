@@ -43,14 +43,17 @@ PointCloud AdaptivelyVoxelFiltered(
     // 'point_cloud' is already sparse enough.
     return point_cloud;
   }
+  // 先用max_length过滤一下
   PointCloud result = VoxelFiltered(point_cloud, options.max_length());
   if (result.size() >= options.min_num_points()) {
+    // 若点数量足够直接返回
     // Filtering with 'max_length' resulted in a sufficiently dense point cloud.
     return result;
   }
   // Search for a 'low_length' that is known to result in a sufficiently
   // dense point cloud. We give up and use the full 'point_cloud' if reducing
   // the edge length by a factor of 1e-2 is not enough.
+  // 若点数量不足,自适应条件过滤器大小,重新过滤
   for (float high_length = options.max_length();
        high_length > 1e-2f * options.max_length(); high_length /= 2.f) {
     float low_length = high_length / 2.f;

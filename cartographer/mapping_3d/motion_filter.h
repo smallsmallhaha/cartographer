@@ -31,6 +31,10 @@ proto::MotionFilterOptions CreateMotionFilterOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
 // Takes poses as input and filters them to get fewer poses.
+/**
+ * @brief 运动过滤器
+ * 
+ */
 class MotionFilter {
  public:
   explicit MotionFilter(const proto::MotionFilterOptions& options);

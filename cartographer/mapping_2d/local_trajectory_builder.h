@@ -55,6 +55,22 @@ class LocalTrajectoryBuilder {
   const mapping::PoseEstimate& pose_estimate() const;
 
   // Range data must be approximately horizontal for 2D SLAM.
+  /**
+   * @brief 添加RangeData
+   * 
+   * 该函数以num_accumulated_为调用周期处理数据,每个周期的处理流程如下:
+   * 
+   * 1. 使用首次被调用时的位姿为标准,
+   *    调用num_accumulated_次后得到一个由num_accumulated_个RangeData数据构成的点云集合
+   * 2. 将点云集合投影到水平面上,
+   *    通过位姿外推器提供的初值使用ScanMatch对RangeData和旧的子图进行匹配,
+   *    向旧的子图和新的子图中插入匹配完成的RangeData,
+   *    返回匹配的结果
+   * 
+   * @param common::Time 
+   * @param range_data 
+   * @return std::unique_ptr<InsertionResult> 
+   */
   std::unique_ptr<InsertionResult> AddRangeData(
       common::Time, const sensor::RangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
@@ -89,6 +105,10 @@ class LocalTrajectoryBuilder {
   std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
 
   int num_accumulated_ = 0;
+  /**
+   * @brief 每接收num_accumulated_个RangeData数据包中第一个数据包的位姿
+   * 
+   */
   transform::Rigid3f first_pose_estimate_ = transform::Rigid3f::Identity();
   sensor::RangeData accumulated_range_data_;
 };

@@ -77,6 +77,7 @@ std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddRangeData(const common::Time time,
                                      const sensor::RangeData& range_data) {
   // Initialize extrapolator now if we do not ever use an IMU.
+  // 如果不用IMU,初始化外推器
   if (!options_.use_imu_data()) {
     InitializeExtrapolator(time);
   }
@@ -88,6 +89,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     return nullptr;
   }
   if (num_accumulated_ == 0) {
+    // 获取第一个RangeData的位姿
     first_pose_estimate_ = extrapolator_->ExtrapolatePose(time).cast<float>();
     accumulated_range_data_ =
         sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
@@ -104,9 +106,12 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     const Eigen::Vector3f delta = hit - range_data_in_first_tracking.origin;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
+      // 小于min_range的被丢弃
       if (range <= options_.max_range()) {
+        // min_range,max_range之间的为hit
         accumulated_range_data_.returns.push_back(hit);
       } else {
+        // max_range以上的为miss
         accumulated_range_data_.misses.push_back(
             range_data_in_first_tracking.origin +
             options_.missing_data_ray_length() / range * delta);
@@ -116,6 +121,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   ++num_accumulated_;
 
   if (num_accumulated_ >= options_.scans_per_accumulation()) {
+    // num_accumulated_个range_data合并在一起做scan匹配
     num_accumulated_ = 0;
     return AddAccumulatedRangeData(
         time, sensor::TransformRangeData(accumulated_range_data_,
@@ -129,6 +135,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const sensor::RangeData& range_data) {
   // Transforms 'range_data' into a frame where gravity direction is
   // approximately +z.
+  // 计算range_data的重力对齐值
   const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
       extrapolator_->EstimateGravityOrientation(time));
   const sensor::RangeData gravity_aligned_range_data =
@@ -139,16 +146,19 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   }
 
   // Computes a gravity aligned pose prediction.
+  // 计算重力对齐后的姿态,作为scan匹配的初始值
   const transform::Rigid3d non_gravity_aligned_pose_prediction =
       extrapolator_->ExtrapolatePose(time);
   const transform::Rigid2d pose_prediction = transform::Project2D(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
+  // 通过ScanMatch进行匹配
   transform::Rigid2d pose_estimate_2d;
   ScanMatch(time, pose_prediction, gravity_aligned_range_data,
             &pose_estimate_2d);
   const transform::Rigid3d pose_estimate =
       transform::Embed3D(pose_estimate_2d) * gravity_alignment;
+  // 将计算后的pose加入位姿外推器
   extrapolator_->AddPose(time, pose_estimate);
 
   last_pose_estimate_ = {
@@ -157,25 +167,30 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
           gravity_aligned_range_data.returns,
           transform::Embed3D(pose_estimate_2d.cast<float>()))};
 
+  // 判断本次位姿和上一次位姿是否相似
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
 
   // Querying the active submaps must be done here before calling
   // InsertRangeData() since the queried values are valid for next insertion.
+  // 获取激活的子图
   std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   for (const std::shared_ptr<Submap>& submap : active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
+  // 向子图中插入RangeData
   active_submaps_.InsertRangeData(
       TransformRangeData(gravity_aligned_range_data,
                          transform::Embed3D(pose_estimate_2d.cast<float>())));
 
+  // 过滤一下点云
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.loop_closure_adaptive_voxel_filter_options());
   const sensor::PointCloud filtered_gravity_aligned_point_cloud =
       adaptive_voxel_filter.Filter(gravity_aligned_range_data.returns);
 
+  // 返回本次匹配的数据,用于显示
   return common::make_unique<InsertionResult>(InsertionResult{
       std::make_shared<const mapping::TrajectoryNode::Data>(
           mapping::TrajectoryNode::Data{

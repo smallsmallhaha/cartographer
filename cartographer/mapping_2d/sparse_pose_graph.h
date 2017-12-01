@@ -177,6 +177,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const sparse_pose_graph::ConstraintBuilder::Result& result)
       REQUIRES(mutex_);
 
+ private:
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
 

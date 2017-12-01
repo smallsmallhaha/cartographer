@@ -28,7 +28,7 @@ namespace transform {
 
 // A time-ordered buffer of transforms that supports interpolated lookups.
 /**
- * @brief 旋转和平移变换内插缓冲区类
+ * @brief 坐标变换内插器(使用缓冲区实现)
  * 
  */
 class TransformInterpolationBuffer {
@@ -39,24 +39,30 @@ class TransformInterpolationBuffer {
 
   // Adds a new transform to the buffer and removes the oldest transform if the
   // buffer size limit is exceeded.
+  // 向缓冲区挺安静新的坐标变换
   void Push(common::Time time, const transform::Rigid3d& transform);
 
   // Returns true if an interpolated transfrom can be computed at 'time'.
+  // 是否能计算时间点time的坐标变换
   bool Has(common::Time time) const;
 
   // Returns an interpolated transform at 'time'. CHECK()s that a transform at
   // 'time' is available.
+  // 查找时间点time的坐标变换
   transform::Rigid3d Lookup(common::Time time) const;
 
   // Returns the timestamp of the earliest transform in the buffer or 0 if the
   // buffer is empty.
+  // 返回缓冲区的最晚时间,若缓冲区为空,返回0
   common::Time earliest_time() const;
 
   // Returns the timestamp of the earliest transform in the buffer or 0 if the
   // buffer is empty.
+  // 返回缓冲区的最早时间,若缓冲区为空,返回0
   common::Time latest_time() const;
 
   // Returns true if the buffer is empty.
+  // 缓冲区是否为空
   bool empty() const;
 
  private:

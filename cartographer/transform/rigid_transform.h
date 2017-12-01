@@ -58,7 +58,7 @@ class Rigid2 {
     return Rigid2(vector, Rotation2D::Identity());
   }
   /**
-   * @brief 单位旋转阵
+   * @brief 单位变换
    * 
    * @return Rigid2<FloatType> 
    */
@@ -74,7 +74,7 @@ class Rigid2 {
 
   Rotation2D rotation() const { return rotation_; }
   /**
-   * @brief 标准旋转角
+   * @brief 标准化旋转角
    * 
    * @return double 
    */
@@ -185,6 +185,7 @@ class Rigid3 {
    */
   Rigid3 inverse() const {
     const Quaternion rotation = rotation_.conjugate();
+    // 注意这里使用了对Quaternion和Vector3d乘法的重载
     const Vector translation = -(rotation * translation_);
     return Rigid3(translation, rotation);
   }

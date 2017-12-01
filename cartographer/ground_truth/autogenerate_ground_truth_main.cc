@@ -45,6 +45,12 @@ namespace cartographer {
 namespace ground_truth {
 namespace {
 
+/**
+ * @brief 返回每个node距离初始node运动路径的总和
+ * 
+ * @param trajectory 
+ * @return std::vector<double> 
+ */
 std::vector<double> ComputeCoveredDistance(
     const mapping::proto::Trajectory& trajectory) {
   std::vector<double> covered_distance;
@@ -65,6 +71,12 @@ std::vector<double> ComputeCoveredDistance(
 //
 // TODO(whess): Should we consider all nodes inserted into the submap and
 // exclude, e.g. based on large relative linear or angular distance?
+/**
+ * @brief 返回submap_index到node_index的对应列表
+ * 
+ * @param pose_graph 
+ * @return std::vector<int> 
+ */
 std::vector<int> ComputeSubmapRepresentativeNode(
     const mapping::proto::SparsePoseGraph& pose_graph) {
   std::vector<int> submap_to_node_index;
@@ -88,10 +100,20 @@ std::vector<int> ComputeSubmapRepresentativeNode(
   return submap_to_node_index;
 }
 
+/**
+ * @brief 使用SparsePoseGraph生成GroundTruth
+ * 
+ * @param pose_graph 
+ * @param min_covered_distance 
+ * @param outlier_threshold_meters 
+ * @param outlier_threshold_radians 
+ * @return proto::GroundTruth 
+ */
 proto::GroundTruth GenerateGroundTruth(
     const mapping::proto::SparsePoseGraph& pose_graph,
     const double min_covered_distance, const double outlier_threshold_meters,
     const double outlier_threshold_radians) {
+  // 只使用第一条trajectory
   const mapping::proto::Trajectory& trajectory = pose_graph.trajectory(0);
   const std::vector<double> covered_distance =
       ComputeCoveredDistance(trajectory);
@@ -105,6 +127,7 @@ proto::GroundTruth GenerateGroundTruth(
     // We're only interested in loop closure constraints.
     if (constraint.tag() ==
         mapping::proto::SparsePoseGraph::Constraint::INTRA_SUBMAP) {
+      // 只计算闭环优化内的约束
       continue;
     }
 
@@ -177,6 +200,7 @@ void Run(const string& pose_graph_filename, const string& output_filename,
   }
   LOG(INFO) << "Autogenerating ground truth relations...";
   const proto::GroundTruth ground_truth =
+      // 使用读取的SparsePoseGraph计算GroundTruth
       GenerateGroundTruth(pose_graph, min_covered_distance,
                           outlier_threshold_meters, outlier_threshold_radians);
   LOG(INFO) << "Writing " << ground_truth.relation_size() << " relations to '"

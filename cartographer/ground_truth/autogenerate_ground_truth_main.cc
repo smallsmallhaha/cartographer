@@ -72,7 +72,10 @@ std::vector<double> ComputeCoveredDistance(
 // TODO(whess): Should we consider all nodes inserted into the submap and
 // exclude, e.g. based on large relative linear or angular distance?
 /**
- * @brief 返回submap_index到node_index的对应列表
+ * @brief 计算每个submap对应的第一个node,返回submap_index到node_index的对应列表
+ * 
+ * 对应列表内容: first_node_index_of_submap0, first_node_index_of_submap1...
+ * 注意: submap_index为0的不在列表内
  * 
  * @param pose_graph 
  * @return std::vector<int> 
@@ -103,6 +106,13 @@ std::vector<int> ComputeSubmapRepresentativeNode(
 /**
  * @brief 使用SparsePoseGraph生成GroundTruth
  * 
+ * 原理是比较两个node的相对位置和约束的相对位置
+ * 
+ * 过程如下:
+ * 
+ * 1. 去除首尾两个submap的所有约束
+ * 2. 计算两个node的相对位姿和约束相对位姿
+ * 
  * @param pose_graph 
  * @param min_covered_distance 
  * @param outlier_threshold_meters 
@@ -118,6 +128,7 @@ proto::GroundTruth GenerateGroundTruth(
   const std::vector<double> covered_distance =
       ComputeCoveredDistance(trajectory);
 
+  // 注意: 这里没有submap_index=0对应的node_index
   const std::vector<int> submap_to_node_index =
       ComputeSubmapRepresentativeNode(pose_graph);
 
@@ -137,6 +148,7 @@ proto::GroundTruth GenerateGroundTruth(
     CHECK_EQ(constraint.node_id().trajectory_id(), 0);
     if (constraint.submap_id().submap_index() >=
         static_cast<int>(submap_to_node_index.size())) {
+      // 注意这里把最后一个submap对应的所有约束都丢弃了
       continue;
     }
     const int matched_node = constraint.node_id().node_index();
@@ -147,6 +159,7 @@ proto::GroundTruth GenerateGroundTruth(
     if (std::abs(covered_distance.at(matched_node) -
                  covered_distance.at(representative_node)) <
         min_covered_distance) {
+      // 走过的距离不应该过小
       continue;
     }
 
@@ -156,22 +169,28 @@ proto::GroundTruth GenerateGroundTruth(
         transform::ToRigid3(trajectory.node(representative_node).pose());
     const transform::Rigid3d solution_pose2 =
         transform::ToRigid3(trajectory.node(matched_node).pose());
+    // pose1和pose2的相对位姿
     const transform::Rigid3d solution =
         solution_pose1.inverse() * solution_pose2;
 
     const transform::Rigid3d submap_solution = transform::ToRigid3(
         trajectory.submap(constraint.submap_id().submap_index()).pose());
+    // submap到pose1的约束
     const transform::Rigid3d submap_solution_to_node_solution =
         solution_pose1.inverse() * submap_solution;
+    // node2到submap的约束
     const transform::Rigid3d node_to_submap_constraint =
         transform::ToRigid3(constraint.relative_pose());
+    // pose1和pose2的约束
     const transform::Rigid3d expected =
         submap_solution_to_node_solution * node_to_submap_constraint;
 
+    // 误差
     const transform::Rigid3d error = solution * expected.inverse();
 
     if (error.translation().norm() > outlier_threshold_meters ||
         transform::GetAngle(error) > outlier_threshold_radians) {
+      // 超过一定限值的为粗差
       ++num_outliers;
       continue;
     }

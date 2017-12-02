@@ -125,6 +125,10 @@ void SparsePoseGraph::AddScan(
   // We have to check this here, because it might have changed by the time we
   // execute the lambda.
   // 旧子图是否刚刚完成,不要在lambda表达式内部写这个,因为不知道lambda表达式什么时候执行
+  //
+  // 请注意: 该作业只能通过调用HandleWorkQueue()来执行
+  //
+  // 执行顺序太乱了,wc!!
   const bool newly_finished_submap = insertion_submaps.front()->finished();
   AddWorkItem([=]() REQUIRES(mutex_) {
     ComputeConstraintsForScan(node_id, insertion_submaps,

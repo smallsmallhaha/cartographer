@@ -69,6 +69,7 @@ void ConstraintBuilder::MaybeAddConstraint(
   }
   if (sampler_.Pulse()) {
     common::MutexLocker locker(&mutex_);
+    // 添加约束
     constraints_.emplace_back();
     auto* const constraint = &constraints_.back();
     ++pending_computations_[current_computation_];
@@ -179,6 +180,10 @@ void ConstraintBuilder::ComputeConstraint(
   // 1. Fast estimate using the fast correlative scan matcher.
   // 2. Prune if the score is too low.
   // 3. Refine.
+  // 三步计算pose估计值
+  // 1. 使用FCSM快速估计
+  // 2. 若匹配分数太低,则退出
+  // 3. 优化
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             constant_data->filtered_gravity_aligned_point_cloud,
@@ -207,6 +212,7 @@ void ConstraintBuilder::ComputeConstraint(
   // Use the CSM estimate as both the initial and previous pose. This has the
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
+  // 使用CSM估计值作为初始pose和前一个pose. 当没有更好的信息时,我们倾向于使用原始CSM估计值
   ceres::Solver::Summary unused_summary;
   ceres_scan_matcher_.Match(pose_estimate, pose_estimate,
                             constant_data->filtered_gravity_aligned_point_cloud,
@@ -215,6 +221,8 @@ void ConstraintBuilder::ComputeConstraint(
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;
+  
+  // 约束计算完成后将更新constraint,尤其是pose和tag(变为INTER_SUBMAP)
   constraint->reset(new Constraint{submap_id,
                                    node_id,
                                    {transform::Embed3D(constraint_transform),

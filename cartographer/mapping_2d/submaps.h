@@ -71,6 +71,7 @@ class Submap : public mapping::Submap {
 
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
+  // 将range_data插入submap,只有当submap.finished()==false才能插入
   void InsertRangeData(const sensor::RangeData& range_data,
                        const RangeDataInserter& range_data_inserter);
   void Finish();
@@ -92,11 +93,16 @@ class Submap : public mapping::Submap {
 /**
  * @brief 活跃的子图
  * 
- * 除了初始化时只有一个子图外,任何时候都有两个子图处于激活状态,
+ * 每条trajectory除了初始化时只有一个子图外,任何时候都有两个子图处于激活状态:
  * 旧的子图负责与scan匹配,新的用于构造下一个子图
  * 
- * 一旦一定数目的scan被插入后,新的子图就完成了初始化:
- * 此时旧的子图不再改变,新的子图现在成了旧的子图,用于scan-to-map匹配.
+ * 一旦一定数目的scan被插入后,新的子图就完成了初始化,此时旧的子图不再改变,
+ * 新子图变成了旧子图,用于scan-to-map匹配.
+ * 
+ * 
+ * 使用方法如下:
+ * 1. 初始化
+ * 2. 不断调用InsertRangeData()插入雷达数据即可
  * 
  */
 class ActiveSubmaps {
@@ -117,7 +123,10 @@ class ActiveSubmaps {
 
   // Inserts 'range_data' into the Submap collection.
   /**
-   * @brief 向子图集submaps_中插入距离测量数据
+   * @brief 向子图集中插入距离测量数据
+   * 
+   * 若新子图插入次数达到num_range_data,则完成并销毁旧子图,添加新子图,
+   * 这样可以保证任何时候只有新旧两张子图,而且两张都是未完成的
    * 
    * @param range_data 
    */
@@ -127,12 +136,12 @@ class ActiveSubmaps {
 
  private:
   /**
-   * @brief 完成并销毁第一个子图,matching_submap_index_加一
+   * @brief 完成并销毁第一个子图
    * 
    */
   void FinishSubmap();
   /**
-   * @brief 添加一个子图,若子图有两个,则销毁第一个子图再添加新的
+   * @brief 添加一个新子图,若子图个数大于二,则销毁第一个子图再添加新子图
    * 
    * @param origin 
    */

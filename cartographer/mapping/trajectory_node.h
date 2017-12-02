@@ -30,6 +30,7 @@ namespace cartographer {
 namespace mapping {
 
 struct TrajectoryNode {
+  // TrajectoryNode::Data数据结构:时间,重力对齐方向,重力对齐后的点云,初始位姿
   struct Data {
     common::Time time;
 

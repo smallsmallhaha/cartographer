@@ -156,6 +156,7 @@ void ActiveSubmaps::InsertRangeData(const sensor::RangeData& range_data) {
     submap->InsertRangeData(range_data, range_data_inserter_);
   }
   if (submaps_.back()->num_range_data() == options_.num_range_data()) {
+    // 先删除完成的子图再添加新的子图,保证了任何时刻都有两张子图
     AddSubmap(range_data.origin.head<2>());
   }
 }
@@ -177,6 +178,7 @@ void ActiveSubmaps::AddSubmap(const Eigen::Vector2f& origin) {
   if (submaps_.size() > 1) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
+    // 先删除完成的子图,保证了任何时刻都有两张子图
     FinishSubmap();
   }
   constexpr int kInitialSubmapSize = 100;

@@ -40,6 +40,8 @@ namespace mapping_2d {
 // without loop closure.
 class LocalTrajectoryBuilder {
  public:
+  // RangeData插入submap的结果,含有插入的新/旧子图和TrajectoryNode::Data数据
+  // TrajectoryNode::Data数据结构:时间,重力对齐方向,重力对齐后的点云,经过scan-to-map-match但未优化的位姿
   struct InsertionResult {
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;

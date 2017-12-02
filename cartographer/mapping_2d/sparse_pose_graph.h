@@ -107,6 +107,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // The current state of the submap in the background threads. When this
   // transitions to kFinished, all scans are tried to match against this submap.
   // Likewise, all new scans are matched against submaps which are finished.
+  // 后台线程中子图的当前状态. 当状态转换为kFinished时,所有的scan都试图与该submap匹配
+  // 同样的,所有的新的scan都会与kFinished状态的submap匹配
   enum class SubmapState { kActive, kFinished, kTrimmed };
   struct SubmapData {
     std::shared_ptr<const Submap> submap;
@@ -120,6 +122,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   };
 
   // Handles a new work item.
+  // 添加一个新的工作项
   void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
@@ -133,12 +136,14 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       REQUIRES(mutex_);
 
   // Adds constraints for a scan, and starts scan matching in the background.
+  // 为scan添加constraints,并开始在后台匹配
   void ComputeConstraintsForScan(
       const mapping::NodeId& node_id,
       std::vector<std::shared_ptr<const Submap>> insertion_submaps,
       bool newly_finished_submap) REQUIRES(mutex_);
 
   // Computes constraints for a scan and submap pair.
+  // 为scan和submap计算约束
   void ComputeConstraint(const mapping::NodeId& node_id,
                          const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
@@ -148,6 +153,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Registers the callback to run the optimization once all constraints have
   // been computed, that will also do all work that queue up in 'work_queue_'.
+  // 处理作业队列,当所有约束计算完成之后运行回调函数开始优化
   void HandleWorkQueue() REQUIRES(mutex_);
 
   // Waits until we caught up (i.e. nothing is waiting to be scheduled), and
@@ -183,6 +189,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // If it exists, further work items must be added to this queue, and will be
   // considered later.
+  // 作业队列
   std::unique_ptr<std::deque<std::function<void()>>> work_queue_
       GUARDED_BY(mutex_);
 
@@ -200,6 +207,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   bool run_loop_closure_ GUARDED_BY(mutex_) = false;
 
   // Current optimization problem.
+  // 当前的OptimizationProblem
   sparse_pose_graph::OptimizationProblem optimization_problem_;
   sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);

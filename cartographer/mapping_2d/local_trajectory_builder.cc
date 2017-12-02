@@ -179,7 +179,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   for (const std::shared_ptr<Submap>& submap : active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
-  // 向子图中插入RangeData
+  // 向子图中插入RangeData,若插入次数到一定值,则销毁旧子图指针(数据还在,控制权交给insertion_submaps了
   active_submaps_.InsertRangeData(
       TransformRangeData(gravity_aligned_range_data,
                          transform::Embed3D(pose_estimate_2d.cast<float>())));
@@ -201,6 +201,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
               {},  // 'low_resolution_point_cloud' is only used in 3D.
               {},  // 'rotational_scan_matcher_histogram' is only used in 3D.
               pose_estimate}),
+      // 注意: 子图并未被销毁,控制权被转交给了返回值
       std::move(insertion_submaps)});
 }
 

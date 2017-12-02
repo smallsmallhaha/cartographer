@@ -102,6 +102,7 @@ void SparsePoseGraph::AddScan(
 
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(trajectory_id);
+  // 添加trajectory_node
   const mapping::NodeId node_id = trajectory_nodes_.Append(
       trajectory_id, mapping::TrajectoryNode{constant_data, optimized_pose});
   ++num_trajectory_nodes_;
@@ -115,6 +116,7 @@ void SparsePoseGraph::AddScan(
               .submap != insertion_submaps.back()) {
     // We grow 'submap_data_' as needed. This code assumes that the first
     // time we see a new submap is as 'insertion_submaps.back()'.
+    // 如果submap_data_中没有对应的子图,则新建项并插入submap_data_
     const mapping::SubmapId submap_id =
         submap_data_.Append(trajectory_id, SubmapData());
     submap_data_.at(submap_id).submap = insertion_submaps.back();
@@ -122,6 +124,7 @@ void SparsePoseGraph::AddScan(
 
   // We have to check this here, because it might have changed by the time we
   // execute the lambda.
+  // 旧子图是否刚刚完成,不要在lambda表达式内部写这个,因为不知道lambda表达式什么时候执行
   const bool newly_finished_submap = insertion_submaps.front()->finished();
   AddWorkItem([=]() REQUIRES(mutex_) {
     ComputeConstraintsForScan(node_id, insertion_submaps,
@@ -236,6 +239,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     const mapping::SubmapId submap_id = submap_ids[i];
     // Even if this was the last scan added to 'submap_id', the submap will only
     // be marked as finished in 'submap_data_' further below.
+    // 为每一个submap和node添加约束
     CHECK(submap_data_.at(submap_id).state == SubmapState::kActive);
     submap_data_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid2d constraint_transform =
@@ -251,9 +255,11 @@ void SparsePoseGraph::ComputeConstraintsForScan(
 
   for (int trajectory_id = 0; trajectory_id < submap_data_.num_trajectories();
        ++trajectory_id) {
+    // 遍历所有trajectory
     for (int submap_index = 0;
          submap_index < submap_data_.num_indices(trajectory_id);
          ++submap_index) {
+      // 为每条trajectory上所有的submap和给定的node计算约束
       const mapping::SubmapId submap_id{trajectory_id, submap_index};
       if (submap_data_.at(submap_id).state == SubmapState::kFinished) {
         CHECK_EQ(submap_data_.at(submap_id).node_ids.count(node_id), 0);
@@ -263,6 +269,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   }
 
   if (newly_finished_submap) {
+    // 若insertion_submaps.front()刚完成,则为该submap和每一个node计算约束
     const mapping::SubmapId finished_submap_id = submap_ids.front();
     SubmapData& finished_submap_data = submap_data_.at(finished_submap_id);
     CHECK(finished_submap_data.state == SubmapState::kActive);

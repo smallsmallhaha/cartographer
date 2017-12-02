@@ -50,6 +50,15 @@ struct SubmapData {
 };
 
 // Implements the SPA loop closure method.
+/**
+ * 
+ * @brief SPA闭环优化实现
+ * 
+ * 具体用法:
+ * 1. Add**Data() 添加各种数据,尤其是submap和node数据
+ * 2. Solve() 利用添加的数据和约束计算
+ * 
+ */
 class OptimizationProblem {
  public:
   using Constraint = mapping::SparsePoseGraph::Constraint;
@@ -76,6 +85,7 @@ class OptimizationProblem {
   void SetMaxNumIterations(int32 max_num_iterations);
 
   // Computes the optimized poses.
+  // 计算优化后的pose
   void Solve(const std::vector<Constraint>& constraints,
              const std::set<int>& frozen_trajectories);
 

@@ -110,6 +110,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // 后台线程中子图的当前状态. 当状态转换为kFinished时,所有的scan都试图与该submap匹配
   // 同样的,所有的新的scan都会与kFinished状态的submap匹配
   enum class SubmapState { kActive, kFinished, kTrimmed };
+  // SubmapData数据结构: 子图 submap,与子图有约束的节点 node_ids,子图状态 state
   struct SubmapData {
     std::shared_ptr<const Submap> submap;
 
@@ -122,7 +123,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   };
 
   // Handles a new work item.
-  // 添加一个新的工作项
+  // 添加一个新的作业项,只是加入作业队列,还未执行
   void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
@@ -130,6 +131,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
+  // 添加optimization problem,为insertion_submaps的每个元素提供一个入口,返回SubmapId[]
   std::vector<mapping::SubmapId> GrowSubmapTransformsAsNeeded(
       int trajectory_id,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)

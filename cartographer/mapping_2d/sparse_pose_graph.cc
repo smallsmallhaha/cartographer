@@ -102,7 +102,7 @@ void SparsePoseGraph::AddScan(
 
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(trajectory_id);
-  // 添加trajectory_node
+  // 添加一个新的 trajectory_node
   const mapping::NodeId node_id = trajectory_nodes_.Append(
       trajectory_id, mapping::TrajectoryNode{constant_data, optimized_pose});
   ++num_trajectory_nodes_;
@@ -116,7 +116,7 @@ void SparsePoseGraph::AddScan(
               .submap != insertion_submaps.back()) {
     // We grow 'submap_data_' as needed. This code assumes that the first
     // time we see a new submap is as 'insertion_submaps.back()'.
-    // 如果submap_data_中没有对应的子图,则新建项并插入submap_data_
+    // 若 submap_data_ 中没有对应的子图,则添加一个新的子图项并插入
     const mapping::SubmapId submap_id =
         submap_data_.Append(trajectory_id, SubmapData());
     submap_data_.at(submap_id).submap = insertion_submaps.back();
@@ -128,7 +128,8 @@ void SparsePoseGraph::AddScan(
   //
   // 请注意: 该作业只能通过调用HandleWorkQueue()来执行
   //
-  // 执行顺序太乱了,wc!!
+  // 执行顺序基本明白了,我会写在类的注释里面
+  //
   const bool newly_finished_submap = insertion_submaps.front()->finished();
   AddWorkItem([=]() REQUIRES(mutex_) {
     ComputeConstraintsForScan(node_id, insertion_submaps,
@@ -138,8 +139,10 @@ void SparsePoseGraph::AddScan(
 
 void SparsePoseGraph::AddWorkItem(const std::function<void()>& work_item) {
   if (work_queue_ == nullptr) {
+    // 若队列为空,则直接执行
     work_item();
   } else {
+    // 若队列非空,则将作业压入队列
     work_queue_->push_back(work_item);
   }
 }
@@ -193,6 +196,9 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
     // been a recent global constraint that ties that scan's trajectory to the
     // submap's trajectory, it suffices to do a match constrained to a local
     // search window.
+    /** 如果 node 和 submap 属于相同的 trajectory 或者 不久前有一个位于两个不同
+     *  trajectory 间的约束被计算,则只要计算局部搜索窗口内的约束就行了
+     */
     const transform::Rigid2d initial_relative_pose =
         optimization_problem_.submap_data().at(submap_id).pose.inverse() *
         optimization_problem_.node_data().at(node_id).pose;
@@ -243,7 +249,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     const mapping::SubmapId submap_id = submap_ids[i];
     // Even if this was the last scan added to 'submap_id', the submap will only
     // be marked as finished in 'submap_data_' further below.
-    // 为每一个submap和node添加约束
+    // 为insertion_submaps中的每一个submap和node添加约束
     CHECK(submap_data_.at(submap_id).state == SubmapState::kActive);
     submap_data_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid2d constraint_transform =
@@ -287,10 +293,13 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   if (options_.optimize_every_n_scans() > 0 &&
       num_scans_since_last_loop_closure_ > options_.optimize_every_n_scans()) {
     CHECK(!run_loop_closure_);
+    // scan数到达一定值,则开始执行闭环优化
     run_loop_closure_ = true;
     // If there is a 'work_queue_' already, some other thread will take care.
+    // 若工作队列非空,则work_queue已在其它线程控制之下
     if (work_queue_ == nullptr) {
       work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+      // !!! 注意: HandleWork只在这里被调用,作用是注册constraint_builder_的回调函数
       HandleWorkQueue();
     }
   }
@@ -350,6 +359,10 @@ void SparsePoseGraph::HandleWorkQueue() {
         }
         LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
         // We have to optimize again.
+	/**
+	 * 能运行到这里,说明闭环优化算的太慢了, 以至于下一轮优化已经开始, run_loop_closure_
+	 * 已经被设为 true, 所以才能退出上面的循环, work_queue_ 也没有被清空
+	 */
         HandleWorkQueue();
       });
 }

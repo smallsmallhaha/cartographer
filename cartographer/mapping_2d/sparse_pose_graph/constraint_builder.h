@@ -56,14 +56,14 @@ transform::Rigid2d ComputeSubmapPose(const Submap& submap);
 // MaybeAdd(Global)Constraint()/WhenDone() cycle can follow.
 //
 // This class is thread-safe.
-/**
+/** 
+ * @brief 计算约束(异步)
  * 
- * @brief 异步计算约束
- * 
- * 使用方法:
- * 1. 任意多次调用MaybeAdd(Global)Constraint()
- * 2. 使用WhenDone()注册计算完成时的回调函数
- * 3. 计算中...,完成后调用回调函数
+ * 以下是一个计算周期(后面的注释里会写成'周期')
+ * 1. 任意多次调用MaybeAdd(Global)Constraint(), 最后调用一次 WhenDone() 注册回调函数
+ * 2. 上述两种调用分别对应约束的计算和优化的计算, 顺序为; 先完成所有约束计算, 然后调用回调函数
+ *    完成优化计算
+ * 上述'周期'完成了就是本系统所做的大部分计算,重复上述过程即可
  * 
  * 线程安全
  * 
@@ -88,7 +88,7 @@ class ConstraintBuilder {
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
-  // 添加约束
+  // 添加约束,调度计算约束
   void MaybeAddConstraint(
       const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id,
@@ -101,18 +101,23 @@ class ConstraintBuilder {
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
-  // 添加全局约束,使用全局地图匹配
+  // 添加全局约束,调度计算全局约束
   void MaybeAddGlobalConstraint(
       const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id,
       const mapping::TrajectoryNode::Data* const constant_data);
 
   // Must be called after all computations related to one node have been added.
+  /**
+   * @brief  scan 数据添加结束
+   * 
+   * 必须在与一个 node 相关的所有计算任务都被添加完毕之后(立即)调用
+   */
   void NotifyEndOfScan();
 
   // Registers the 'callback' to be called with the results, after all
   // computations triggered by MaybeAddConstraint() have finished.
-  // 注册回调函数,当所有的MaybeAdd(Global)Constraint()计算完毕后调用回调函数
+  // 注册回调函数,当所有的MaybeAdd(Global)Constraint()触发的计算完毕后调用回调函数
   void WhenDone(const std::function<void(const Result&)>& callback);
 
   // Returns the number of consecutive finished scans.
@@ -163,6 +168,16 @@ class ConstraintBuilder {
   // runs the 'when_done_' callback and resets the state.
   // 降低pending_computations_计数
   // 如果所有计算完毕,运行when_done_回调函数
+  /**
+   * @brief 完成一个计算任务
+   * 
+   * 在两处被调用:
+   * 1. 每计算完一个约束被调用, 对应的 pending_computations_ 计数减一
+   * 2. 每完成一个闭环计算周期, 对应的 pending_computations_ 减一
+   *    注意: 1和2是并行的, 本函数的精巧设计可以使得某个闭环周期的所有约束被计算完毕后才开始
+   *         优化, 具体为:
+   *         当对应的 pending_computations_ 计数减为0时, 执行回调函数 when_done_
+   */
   void FinishComputation(int computation_index) EXCLUDES(mutex_);
 
   
@@ -172,19 +187,29 @@ class ConstraintBuilder {
   common::Mutex mutex_;
 
   // 'callback' set by WhenDone().
-  // 回调函数
+  /**
+   * @brief 回调函数, 通过 WhenDone() 设置, 在每一个周期的调用最后被调用, 用于闭环优化
+   */
   std::unique_ptr<std::function<void(const Result&)>> when_done_
       GUARDED_BY(mutex_);
 
   // Index of the scan in reaction to which computations are currently
   // added. This is always the highest scan index seen so far, even when older
   // scans are matched against a new submap.
-  // 当前是哪一个scan正在计算
+  /**
+   * @brief 当前添加的 scan 的 id
+   * 
+   * 总是最大的 scan id
+   */
   int current_computation_ GUARDED_BY(mutex_) = 0;
 
   // For each added scan, maps to the number of pending computations that were
   // added for it.
-  // 对于每个scan,正在运行(或等待运行)的计算个数
+  /** @brief scan id -> computation_count
+   * 
+   * computation_count 为 0 的项将会被销毁
+   * 
+   */
   std::map<int, int> pending_computations_ GUARDED_BY(mutex_);
 
   // Constraints currently being computed in the background. A deque is used to

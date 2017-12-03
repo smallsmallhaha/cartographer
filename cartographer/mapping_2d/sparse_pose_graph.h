@@ -56,6 +56,25 @@ namespace mapping_2d {
 // Each scan has been matched against one or more submaps (adding a constraint
 // for each match), both poses of scans and of submaps are to be optimized.
 // All constraints are between a submap i and a scan j.
+/**
+ * 
+ * @brief SPA (Sparse Pose Adjustment) 闭环优化算法实现
+ * 
+ * 原理: 请参照论文 Konolige, Kurt, et al. "Efficient sparse pose adjustment for 2d mapping."
+ * 
+ * 简单的来说,就是根据 scan 和 submap 的约束建立稀疏位姿图,进行优化
+ * 
+ * 使用方法:
+ * 
+ * 1. 初始化
+ * 2. 计算约束: 使用 AddScan/AddImuData/AddOdometerData/AddFixedFramePoseData 添加数据,
+ *    同时在工作线程中计算 node 和 submap 的约束
+ * 3. 优化: 调用 RunFinalOptimization() 等待所有约束计算完成,完成最终的优化计算
+ * 
+ * 请注意: 第3步在数据采集完毕后,按Ctrl+C退出后才开始,optimization_problem_.Solve()也是最后
+ *        才执行的
+ * 
+ */
 class SparsePoseGraph : public mapping::SparsePoseGraph {
  public:
   SparsePoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
@@ -70,6 +89,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // 'insertion_submaps.front()' and the scan was inserted into the
   // 'insertion_submaps'. If 'insertion_submaps.front().finished()' is
   // 'true', this submap was inserted into for the last time.
+  /**
+   * @brief
+   * 
+   * 1. 添加新 node
+   * 2. 若 insertion_submaps.back() 第一次出现, 则 submap_data_ 添加新项
+   * 3. 调用 ComputeConstraintsForScan() 为 node 计算约束
+   */
   void AddScan(
       std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
       int trajectory_id,
@@ -107,10 +133,20 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // The current state of the submap in the background threads. When this
   // transitions to kFinished, all scans are tried to match against this submap.
   // Likewise, all new scans are matched against submaps which are finished.
-  // 后台线程中子图的当前状态. 当状态转换为kFinished时,所有的scan都试图与该submap匹配
-  // 同样的,所有的新的scan都会与kFinished状态的submap匹配
+  // 
+  // 
+  /**
+   * @brief 子图状态
+   * 
+   * 后台线程中子图的当前状态. 当状态转换为kFinished时, 所有的scan都试图与该submap匹配
+   * 同样的, 所有的新的scan都会与kFinished状态的submap匹配
+   */
   enum class SubmapState { kActive, kFinished, kTrimmed };
-  // SubmapData数据结构: 子图 submap,与子图有约束的节点 node_ids,子图状态 state
+  /**
+   * @brief 子图数据
+   * 
+   * 结构: 子图 submap  与子图有约束的节点集 node_ids  子图状态 state
+   */
   struct SubmapData {
     std::shared_ptr<const Submap> submap;
 
@@ -123,7 +159,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   };
 
   // Handles a new work item.
-  // 添加一个新的作业项,只是加入作业队列,还未执行
+  /**
+   * @brief 添加一个新的作业项
+   * 
+   * @param work_item 作业项
+   * 
+   * 若作业队列 work_queue_ 为空,则立即执行,否则加入作业队列,等待执行
+   */
   void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
@@ -131,31 +173,82 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
-  // 添加optimization problem,为insertion_submaps的每个元素提供一个入口,返回SubmapId[]
+  /**
+   * @brief 给 optimization_problem_ 添加子图数据
+   * 
+   * @param trajectory_id
+   * @param insertion_submaps
+   *
+   * @return 
+   * 
+   * 给 optimization_problem_ 添加子图数据,为 insertion_submaps 的每个元素提供一个入口
+   */
   std::vector<mapping::SubmapId> GrowSubmapTransformsAsNeeded(
       int trajectory_id,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       REQUIRES(mutex_);
 
   // Adds constraints for a scan, and starts scan matching in the background.
-  // 为scan添加constraints,并开始在后台匹配
+  /**
+   * @brief 为 node 和 submap 添加和计算约束
+   * 
+   * @param node_id  node 对应的 node_id
+   * @param insertion_submaps  插入子图(个数一般为2)
+   * @param newly_finished_submap  旧子图是否刚刚完成(即新子图构造完成)
+   * 
+   * 步骤:
+   * 1. 为 optimization_problem_ 添加 node 数据
+   * 2. 将 node 和 insertion_submaps 的约束加入 constraints_
+   *      (注: constraint类型为Constraint::INTRA_SUBMAP)
+   * 3. 计算指定 node 和所有已完成 submap 的约束
+   * 4. 若旧子图刚刚完成(newly_finished_submap为true),则计算旧子图和
+   *    optimization_problem_ 中所有 node 的约束
+   *      (注: 2和3计算完毕后的constraint结果将被加入constraints_, constraint类型
+   *      为Constraint::INTER_SUBMAP)
+   * 5. 若本函数执行次数达到一定值,则启动闭环优化,过程为:
+   *      若工作队列 work_queue_ 非空,则通过调用 HandleWorkQueue() 使用
+   *        ConstraintBuilder::WhenDone() 注册回调函数;
+   *      否则说明有约束没算完,算完之后调用上次注册的回调函数
+   * 
+   */
   void ComputeConstraintsForScan(
       const mapping::NodeId& node_id,
       std::vector<std::shared_ptr<const Submap>> insertion_submaps,
       bool newly_finished_submap) REQUIRES(mutex_);
 
   // Computes constraints for a scan and submap pair.
-  // 为scan和submap计算约束
+  /**
+   * @brief 为 node 和 submap 计算约束
+   * 
+   * 若 node 和 submap 属于同一个 trajectory, 或者 node 和 submap 所属的不同
+   * trajctory 之间不久前刚计算过约束,
+   *   则使用 constraint_builder_.MaybeAddConstraint()
+   *   否则用 constraint_builder_.MaybeAddGlobalConstraint()
+   */
   void ComputeConstraint(const mapping::NodeId& node_id,
                          const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
   // Adds constraints for older scans whenever a new submap is finished.
+  /**
+   * @brief 为新完成的 submap 和已有的所有 node 计算约束
+   * 
+   */
   void ComputeConstraintsForOldScans(const mapping::SubmapId& submap_id)
       REQUIRES(mutex_);
 
   // Registers the callback to run the optimization once all constraints have
   // been computed, that will also do all work that queue up in 'work_queue_'.
-  // 处理作业队列,当所有约束计算完成之后运行回调函数开始优化
+  /**
+   * @brief 处理作业队列
+   * 
+   * 只在 ComputeConstraintsForScan() 中被调用, 作用是注册 constraint_builder_ 的
+   * 回调函数, 回调函数内容如下:
+   * 1. 将计算完毕的约束结果加入 constraints_
+   * 2. 调用 RunOptimization() 运行优化(优化计算在后台做)
+   * 3. 修剪 SparsePoseGraph
+   * 4. 若 run_loop_closure_ 为 false, 则循环执行 work_queue_ 中的作业项; 若执行过程中
+   *    run_loop_closure_ 突然变为 true, 说明本次优化的太慢了, 以至于下一轮优化已经开始
+   */
   void HandleWorkQueue() REQUIRES(mutex_);
 
   // Waits until we caught up (i.e. nothing is waiting to be scheduled), and
@@ -191,7 +284,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // If it exists, further work items must be added to this queue, and will be
   // considered later.
-  // 作业队列
+  // 作业队列,若非空,则作业项将被加入作业队列,后续执行;否则直接执行
   std::unique_ptr<std::deque<std::function<void()>>> work_queue_
       GUARDED_BY(mutex_);
 
@@ -211,7 +304,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Current optimization problem.
   // 当前的OptimizationProblem
   sparse_pose_graph::OptimizationProblem optimization_problem_;
+  // 当前的ConstraintBuilder, 用于计算约束
   sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
+  // 保存 ConstraintBuilder 计算得到的约束, 供 optimization_problem_.Solve(constraints_,
+  //   frozen_trajectories_) 进行最后的优化
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
   // Submaps get assigned an ID and state as soon as they are seen, even

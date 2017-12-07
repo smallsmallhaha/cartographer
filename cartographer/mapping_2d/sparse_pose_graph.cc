@@ -355,18 +355,17 @@ void SparsePoseGraph::HandleWorkQueue() {
         LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
         // We have to optimize again.
 	/**
-	 * !!! 请注意:
-	 * 为什么能运行到这里?
-	 *   请看上面 while 循环中的 front()(), 当程序运行过慢, 通过 front()() 执行
-	 *   ComputeConstraintsForScan() 达到一定次数时, 将会执行 run_loop_closure=true
-	 *   导致退出循环
-	 *   此时必须再次调用一次 HandleWorkQueue(), 否则会因为 work_queue_ 非空导致
-	 *   无法触发下一次的优化操作
+	 * !!! Q && A:
+	 * Q: 为什么能运行到这里?
+	 * A: 请注意上面 while 循环中的 work_queue_->front()(), 当程序运行过慢, 通过 
+	 * front()() 执行 ComputeConstraintsForScan() 达到一定次数时, 将会执行
+	 * run_loop_closure=true 从而导致退出循环
+	 * 此时必须再次调用一次 HandleWorkQueue(), 否则会因为 work_queue_ 非空导致
+	 * 无法触发下一次的优化操作
 	 * 注意, 此时调用 HandleWorkQueue() 注册回调函数时 constraint_builder_ 中的当前
-	 *   current_computation_ 已经变了, 但没什么影响
-	 * 
-	 * 
-	 * ps: 谷歌的设计可以保证无论程序运行多慢, 计算都是能正常进行
+	 * current_computation_ 已经变了, 但没什么影响
+	 *  
+	 * ps: 谷歌的设计可以保证无论程序运行多慢, 计算都能正常进行
 	 */
         HandleWorkQueue();
       });

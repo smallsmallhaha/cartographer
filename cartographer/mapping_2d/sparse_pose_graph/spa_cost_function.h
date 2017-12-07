@@ -32,6 +32,11 @@ namespace cartographer {
 namespace mapping_2d {
 namespace sparse_pose_graph {
 
+/**
+ * @brief SPA算法核函数定义
+ * 
+ * 使用非线性优化库 ceres-solver 求解优化问题, 此处是SPA的核函数定义
+ */
 class SpaCostFunction {
  public:
   using Constraint = mapping::SparsePoseGraph::Constraint;
@@ -41,6 +46,9 @@ class SpaCostFunction {
   // Computes the error between the scan-to-submap alignment 'zbar_ij' and the
   // difference of submap pose 'c_i' and scan pose 'c_j' which are both in an
   // arbitrary common frame.
+  /**
+   * 无尺度的核函数定义
+   */
   template <typename T>
   static std::array<T, 3> ComputeUnscaledError(
       const transform::Rigid2d& zbar_ij, const T* const c_i,
@@ -60,6 +68,9 @@ class SpaCostFunction {
 
   // Computes the error scaled by 'translation_weight' and 'rotation_weight',
   // storing it in 'e'.
+  /**
+   * 有尺度(权重)的核函数定义
+   */
   template <typename T>
   static void ComputeScaledError(const Constraint::Pose& pose,
                                  const T* const c_i, const T* const c_j,

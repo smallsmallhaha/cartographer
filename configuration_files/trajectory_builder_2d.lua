@@ -15,17 +15,17 @@
 
 -- cartographer处理消息的过程:
 -- 1. 接收到激光数据
---      将每个激光帧的数据平均分成num_subdivisions_per_laser_scan个RangeData
---      将每scans_per_accumulation个RangeData的数据按照第一个RangeData的pose组合到一个坐标系下
---      重力对齐
---      修剪z异常的值
---      使用大小为voxel_filter_size的过滤器过滤[1]
---      使用ScanMatch将RangeData与旧子图的概率格网做匹配[3]
---      将完成匹配的RangeData插入新的和旧的子图
---      返回插入结果(含过滤点云[2])
+--    将每个激光帧的数据平均分成num_subdivisions_per_laser_scan个RangeData
+--    将每scans_per_accumulation个RangeData的数据按照第一个RangeData的pose组合到一个坐标系下
+--    重力对齐
+--    修剪z异常的值
+--    使用大小为voxel_filter_size的过滤器过滤[1]
+--    使用ScanMatch将RangeData与旧子图的概率格网做匹配[3]
+--    将完成匹配的RangeData插入新的和旧的子图
+--    返回插入结果(含过滤点云[2])
 -- 
 -- 2. 接收到IMU数据
---      数据会被传输给位姿外推器,用于估计位姿,没有IMU的话,路径将会被视为在一个平面上
+--    数据会被传输给位姿外推器,用于估计位姿,没有IMU的话,路径将会被视为在一个平面上
 --       
 --       
 
@@ -65,21 +65,33 @@ TRAJECTORY_BUILDER_2D = {
     max_range = 50.,
   },
 
+  -- 是否在[3]中预先使用RTCSM为匹配提供更好的初值
   use_online_correlative_scan_matching = false,
   real_time_correlative_scan_matcher = {
+    -- 线搜索窗口
     linear_search_window = 0.1,
+    -- 角搜索窗口
     angular_search_window = math.rad(20.),
+    -- 位移增量权重
     translation_delta_cost_weight = 1e-1,
+    -- 角度增量权重
     rotation_delta_cost_weight = 1e-1,
   },
 
+  -- 用于[3]的匹配器
   ceres_scan_matcher = {
+    -- 点云到概率格网匹配的权重
     occupied_space_weight = 1.,
+    -- 平移量权重
     translation_weight = 10.,
+    -- 旋转量权重
     rotation_weight = 40.,
     ceres_solver_options = {
+      -- 是否开启非单调置信域算法(注:普通的算法要求必须残差和严格单调递减,容易进入局部最优)
       use_nonmonotonic_steps = false,
+      -- 最大迭代次数
       max_num_iterations = 20,
+      -- 线程数
       num_threads = 1,
     },
   },

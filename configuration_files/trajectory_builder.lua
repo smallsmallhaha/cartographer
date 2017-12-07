@@ -18,5 +18,6 @@ include "trajectory_builder_3d.lua"
 TRAJECTORY_BUILDER = {
   trajectory_builder_2d = TRAJECTORY_BUILDER_2D,
   trajectory_builder_3d = TRAJECTORY_BUILDER_3D,
+  -- 是否只进行定位
   pure_localization = false,
 }

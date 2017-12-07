@@ -13,14 +13,24 @@
 -- limitations under the License.
 
 SPARSE_POSE_GRAPH = {
+  -- 每optimize_every_n_scans个RangeData进行一次优化计算
   optimize_every_n_scans = 90,
+  -- 约束构造器
   constraint_builder = {
+    -- 添加约束的采样率,越高越好,计算量也越大
     sampling_ratio = 0.3,
+    -- 约束初始位姿的平移量上限
     max_constraint_distance = 15.,
+    -- 计算约束步骤中的FCMS分数下限,越过则丢弃约束
     min_score = 0.55,
+    -- 全局匹配(只是不同trajectory间的匹配)的最低分数
     global_localization_min_score = 0.6,
+    -- 闭环优化的平移量权重(实际上是计算得到的约束的权重,用于闭环优化)
     loop_closure_translation_weight = 1.1e4,
+    -- 闭环优化的旋转量权重(实际上是计算得到的约束的权重,用于闭环优化)
     loop_closure_rotation_weight = 1e5,
+    -- 是否输出匹配成功的数据
+    -- 格式: "Node (0, 121) with 101 points on submap (0, 1) differs by...with score 60.1%."
     log_matches = true,
     fast_correlative_scan_matcher = {
       linear_search_window = 7.,

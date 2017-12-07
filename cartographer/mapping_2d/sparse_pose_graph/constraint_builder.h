@@ -67,6 +67,21 @@ transform::Rigid2d ComputeSubmapPose(const Submap& submap);
  * 
  * 线程安全
  * 
+ * 最重要的几个成员和函数:
+ * public:
+ * MaybeAdd(Global)Constraint()  添加约束任务       
+ * NotifyEndOfScan()             当前节点计算任务添加完毕
+ * WhenDone()                    注册回调函数并加入任务池
+ * private:
+ * thread_pool_                  线程池
+ * when_done_                    回调函数,每'周期'完毕执行
+ * pending_computations_         辅助完成'最后才调用回调函数'的功能
+ * 
+ * 约束计算步骤
+ * 1. 使用FCSM快速估计
+ * 2. 若匹配分数太低, 退出
+ * 3. 优化
+ * 
  */
 class ConstraintBuilder {
  public:
@@ -157,6 +172,14 @@ class ConstraintBuilder {
   // anymore. As output, it may create a new Constraint in 'constraint'.
   // 在工作线程中计算并添加约束
   // 计算过程中假设submap和data对应的数据都不会改变
+  /**
+   * @brief 计算约束
+   * 
+   * 三步计算约束
+   * 1. 使用FCSM快速估计
+   * 2. 若匹配分数太低, 退出
+   * 3. 优化
+   */
   void ComputeConstraint(
       const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id, bool match_full_submap,

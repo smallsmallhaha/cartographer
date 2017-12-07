@@ -125,11 +125,6 @@ void SparsePoseGraph::AddScan(
   // We have to check this here, because it might have changed by the time we
   // execute the lambda.
   // 旧子图是否刚刚完成,不要在lambda表达式内部写这个,因为不知道lambda表达式什么时候执行
-  //
-  // 请注意: 该作业只能通过调用HandleWorkQueue()来执行
-  //
-  // 执行顺序基本明白了,我会写在类的注释里面
-  //
   const bool newly_finished_submap = insertion_submaps.front()->finished();
   AddWorkItem([=]() REQUIRES(mutex_) {
     ComputeConstraintsForScan(node_id, insertion_submaps,
@@ -196,8 +191,8 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
     // been a recent global constraint that ties that scan's trajectory to the
     // submap's trajectory, it suffices to do a match constrained to a local
     // search window.
-    /** 如果 node 和 submap 属于相同的 trajectory 或者 不久前有一个位于两个不同
-     *  trajectory 间的约束被计算,则只要计算局部搜索窗口内的约束就行了
+    /** 如果 node 和 submap 属于相同的 trajectory 或者不久前有一个位于两个不同
+     *  trajectory 间的约束被计算, 则只要计算局部搜索窗口内的约束就行了
      */
     const transform::Rigid2d initial_relative_pose =
         optimization_problem_.submap_data().at(submap_id).pose.inverse() *
@@ -360,8 +355,18 @@ void SparsePoseGraph::HandleWorkQueue() {
         LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
         // We have to optimize again.
 	/**
-	 * 能运行到这里,说明闭环优化算的太慢了, 以至于下一轮优化已经开始, run_loop_closure_
-	 * 已经被设为 true, 所以才能退出上面的循环, work_queue_ 也没有被清空
+	 * !!! 请注意:
+	 * 为什么能运行到这里?
+	 *   请看上面 while 循环中的 front()(), 当程序运行过慢, 通过 front()() 执行
+	 *   ComputeConstraintsForScan() 达到一定次数时, 将会执行 run_loop_closure=true
+	 *   导致退出循环
+	 *   此时必须再次调用一次 HandleWorkQueue(), 否则会因为 work_queue_ 非空导致
+	 *   无法触发下一次的优化操作
+	 * 注意, 此时调用 HandleWorkQueue() 注册回调函数时 constraint_builder_ 中的当前
+	 *   current_computation_ 已经变了, 但没什么影响
+	 * 
+	 * 
+	 * ps: 谷歌的设计可以保证无论程序运行多慢, 计算都是能正常进行
 	 */
         HandleWorkQueue();
       });

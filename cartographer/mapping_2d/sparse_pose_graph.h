@@ -74,6 +74,25 @@ namespace mapping_2d {
  * 请注意: 第3步在数据采集完毕后,按Ctrl+C退出后才开始,optimization_problem_.Solve()也是最后
  *        才执行的
  * 
+ * 
+ * 实现细节简述
+ * 最重要的几个成员和函数:
+ * public:
+ * AddScan()                    外部接口, 添加数据, 计算约束和优化
+ * RunFinalOptimization()       程序关闭前最后的优化
+ * private:
+ * work_queue_                  作业队列, 控制工作流程
+ * run_loop_closure_            辅助工作队列控制闭环优化
+ * optimization_problem_        闭环优化
+ * constraint_builder_          后台计算约束和执行闭环优化(可选)
+ * constraints_                 约束, 储存约束信息
+ * submap_data_                 存储子图
+ * num_trajectory_nodes_        存储节点
+ * AddWorkItem()                添加或执行作业项
+ * ComputeConstraintsForScan()  为节点计算约束
+ * ComputeConstraint()          为节点和子图计算约束
+ * HandleWorkQueue()            处理作业队列(为指定的优化设置回调函数)
+ * 
  */
 class SparsePoseGraph : public mapping::SparsePoseGraph {
  public:
@@ -284,7 +303,20 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // If it exists, further work items must be added to this queue, and will be
   // considered later.
-  // 作业队列,若非空,则作业项将被加入作业队列,后续执行;否则直接执行
+  /**
+   * @brief 作业队列
+   * 
+   * 作业队列,若非空,则作业项将被加入作业队列,后续执行; 否则直接执行
+   * 
+   * 可能存在的成员:
+   * ComputeConstraintsForScan()
+   * optimization_problem_.AddImuData()
+   * optimization_problem_.AddOdometerData()
+   * frozen_trajectories_.insert()                  in ::FreezeTrajectory()
+   * optimization_problem_.AddSubmap()              in ::AddSubmapFromProto()
+   * optimization_problem_.AddTrajectoryNode()      in ::AddNodeFromProto()
+   * trimmers_.emplace_back()                       in ::AddTrimmer()
+   */
   std::unique_ptr<std::deque<std::function<void()>>> work_queue_
       GUARDED_BY(mutex_);
 

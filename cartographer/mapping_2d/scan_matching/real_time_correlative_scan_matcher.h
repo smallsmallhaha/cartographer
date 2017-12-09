@@ -54,6 +54,21 @@ CreateRealTimeCorrelativeScanMatcherOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
 // An implementation of "Real-Time Correlative Scan Matching" by Olson.
+/**
+ * @brief scan-map 快速匹配算法的一种实现
+ * 
+ * 原理:
+ * "Real-Time Correlative Scan Matching" by Olson
+ * 
+ * 相关扫描匹配算法详尽地评估了扫描匹配搜索空间. 如论文所述, 基本步骤为:
+ * 1) 使用低分辨率表评估整个3D搜索窗口上的概率 p(z|xi, m).
+ * 2) 在低分辨率三维空间中查找尚未考虑的最佳体素. 把该值记为 Li. 若 Li < Hbest, 则终止:
+ *    Hbest 是最佳的扫描匹配对齐方式.
+ * 3) 使用高分辨率表评估体素i内部的搜索量. 假如这个体素的log-最大似然值是Hi. 注意, 由于低分辨率图
+ *    高估了log-最大似然值. 如果 Hi > Hbest, 设置 Hbest = Hi.
+ * 
+ * 该方法可以被加速
+ */
 class RealTimeCorrelativeScanMatcher {
  public:
   explicit RealTimeCorrelativeScanMatcher(

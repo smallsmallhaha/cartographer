@@ -95,6 +95,16 @@ class PrecomputationGrid {
 class PrecomputationGridStack;
 
 // An implementation of "Real-Time Correlative Scan Matching" by Olson.
+/**
+ * @brief scan-map 快速匹配算法的一种实现
+ * 
+ * 原理:
+ * "Real-Time Correlative Scan Matching" by Olson
+ * "Real-Time Loop Closure in 2D LIDAR SLAM" by Hess (分支定界算法)
+ * 
+ * 本方法类似于 RealTimeCorrelativeScanMatcher, 但是有所不同: 它的扫描速度更快,
+ * 因为对给定的地图进行了更多的预先计算. 但是, 该地图在构造之后不能改变.
+ */
 class FastCorrelativeScanMatcher {
  public:
   FastCorrelativeScanMatcher(

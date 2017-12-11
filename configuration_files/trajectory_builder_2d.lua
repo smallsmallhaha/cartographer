@@ -65,12 +65,12 @@ TRAJECTORY_BUILDER_2D = {
     max_range = 50.,
   },
 
-  -- 是否在[3]中预先使用RTCSM为匹配提供更好的初值
+  -- 是否在[3]之前预先使用RTCSM为匹配提供更好的初值
   use_online_correlative_scan_matching = false,
   real_time_correlative_scan_matcher = {
-    -- 线搜索窗口
+    -- 线搜索窗口(半径)
     linear_search_window = 0.1,
-    -- 角搜索窗口
+    -- 角搜索窗口(半径)
     angular_search_window = math.rad(20.),
     -- 位移增量权重
     translation_delta_cost_weight = 1e-1,

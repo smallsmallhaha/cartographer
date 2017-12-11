@@ -12,8 +12,21 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- cartographer闭环优化的过程:
+-- 本过程分为几个主要部分: 稀疏位姿图, 约束计算, 优化问题
+-- 1. 稀疏位姿图--主要是对消息处理, 作业调度, 位姿图管理
+--    收到一个局部匹配成功的插入结果
+--    若作业队列为空, 说明没有计算任务了, 将插入RangeData看做一个新的node, 直接转到约束计算;
+--      否则说明任务忙, 将当前任务加入队列
+-- 2. 约束计算
+--    添加所有node和所有已完成submap的约束计算任务
+--    添加本轮计算完成后的回调函数, 用来进行闭环优化任务, 每轮任务[1]完成后进入优化问题
+-- 3. 优化问题
+--    通过所有有效约束建立非线性最小二乘优化问题, 求解即可得到优化后的位姿
+-- 
+
 SPARSE_POSE_GRAPH = {
-  -- 每optimize_every_n_scans个RangeData进行一次优化计算
+  -- [1]每添加 optimize_every_n_scans 个新的 node 进行一次优化计算
   optimize_every_n_scans = 90,
   -- 约束构造器
   constraint_builder = {

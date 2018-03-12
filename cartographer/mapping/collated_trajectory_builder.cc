@@ -38,6 +38,7 @@ CollatedTrajectoryBuilder::CollatedTrajectoryBuilder(
       wrapped_trajectory_builder_(std::move(wrapped_trajectory_builder)),
       last_logging_time_(std::chrono::steady_clock::now()) {
   // !!!请注意,HandleCollatedSensorData为传感器数据的回调函数,每收到一个传感器数据,该函数就会被调用一次
+  // 传感器数据处理回调函数注册
   sensor_collator_->AddTrajectory(
       trajectory_id, expected_sensor_ids,
       [this](const string& sensor_id, std::unique_ptr<sensor::Data> data) {

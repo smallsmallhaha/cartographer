@@ -80,3 +80,25 @@ page`_.
     :alt: Cartographer 3D SLAM Demo
     :scale: 100%
     :target: https://youtu.be/DM0dpHLhtX0
+
+call order after receiving a rangefinder data
+=================================================
+
+Node::HandleLaserScanMessage(trajectory_id, sensor_id, msg)
+SensorBridge::HandleLaserScanMessage(sensor_id, msg)
+SensorBridge::HandleLaserScan(sensor_id, start_time, frame_id, points)
+SensorBridge::HandleRangefinder(sensor_id, time, frame_id, ranges)
+mapping::TrajectoryBuilder::AddRangefinderData(sensor_id, time, origin, ranges)
+mapping::TrajectoryBuilder::AddSensorData(sensor_id, data)
+  overrided by mapping::CollatedTrajectoryBuilder::AddSensorData(sensor_id, data)
+sensor::Collator::AddSensorData(trajectory_id, sensor_id, data)
+sensor::OrderedMultiQueue::Add(queue_key, data)
+sensor::OrderedMultiQueue::Dispatch()
+sensor::OrderedMultiQueue::Callback(data)
+  defined by mapping::CollatedTrajectoryBuilder::HandleCollatedSensorData(sensor_id, data)
+-- callback defined in mapping/collated_trajectory_builder.cc : line 42 and sensor/collator.cc : line 28 -->
+sensor::Data::AddToTrajectoryBuilder(trajectory_builder)
+  overrided by sensor::DispatchableRangefinderData::AddToTrajectoryBuilder(trajectory_builder)
+mapping::GlobalTrajectoryBuilderInterface::AddRangefinderData(time, origin, ranges)
+  overrided by mapping::GlobalTrajectoryBuilder::AddRangefinderData(time, origin, ranges)
+mapping_2d::LocalTrajectoryBuilder::AddRangeData(time, data) AND mapping_2d::SparsePoseGraph::AddScan(constant_data, trajectory_id, insertion_submaps)

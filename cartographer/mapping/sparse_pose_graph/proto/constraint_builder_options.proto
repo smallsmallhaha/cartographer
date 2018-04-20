@@ -57,4 +57,7 @@ message ConstraintBuilderOptions {
 
   optional mapping_3d.scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options_3d = 12;
+
+
+  optional int32 random_sampling_const = 15;
 }

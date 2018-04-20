@@ -55,6 +55,10 @@ proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
   *options.mutable_ceres_scan_matcher_options_3d() =
       mapping_3d::scan_matching::CreateCeresScanMatcherOptions(
           parameter_dictionary->GetDictionary("ceres_scan_matcher_3d").get());
+
+  options.set_random_sampling_const(
+      parameter_dictionary->GetInt("random_sampling_const"));
+
   return options;
 }
 

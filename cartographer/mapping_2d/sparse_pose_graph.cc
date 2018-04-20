@@ -44,7 +44,10 @@ SparsePoseGraph::SparsePoseGraph(
     common::ThreadPool* thread_pool)
     : options_(options),
       optimization_problem_(options_.optimization_problem_options()),
-      constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
+      constraint_builder_(options_.constraint_builder_options(), thread_pool) {
+	std::random_device rd;
+	gen = std::mt19937(rd());
+}
 
 SparsePoseGraph::~SparsePoseGraph() {
   WaitForAllComputations();
@@ -264,11 +267,24 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     for (int submap_index = 0;
          submap_index < submap_data_.num_indices(trajectory_id);
          ++submap_index) {
-      // 为每条trajectory上所有的submap和给定的node计算约束
-      const mapping::SubmapId submap_id{trajectory_id, submap_index};
-      if (submap_data_.at(submap_id).state == SubmapState::kFinished) {
-        CHECK_EQ(submap_data_.at(submap_id).node_ids.count(node_id), 0);
-        ComputeConstraint(node_id, submap_id);
+
+      // how-to-use-bernoulli_distribution-in-c++
+      // std::random_device rd;
+      // std::mt19937 gen(rd());
+      // std::bernoulli_distribution d(0.25);
+      // then 'd(gen)' will give "true" 1/4 of the time and give "false" 3/4 of the time
+
+      static int random_sampling_const = options_.constraint_builder_options().random_sampling_const();
+
+      std::bernoulli_distribution d(random_sampling_const * 1.0 / submap_data_.num_indices(trajectory_id));
+          
+      if(random_sampling_const == 0 || d(gen)) {
+        // 为每条trajectory上所有的submap和给定的node计算约束
+        const mapping::SubmapId submap_id{trajectory_id, submap_index};
+        if (submap_data_.at(submap_id).state == SubmapState::kFinished) {
+          CHECK_EQ(submap_data_.at(submap_id).node_ids.count(node_id), 0);
+          ComputeConstraint(node_id, submap_id);
+        }
       }
     }
   }

@@ -30,6 +30,9 @@ SPARSE_POSE_GRAPH = {
   optimize_every_n_scans = 90,
   -- 约束构造器
   constraint_builder = {
+    -- 选择是否使用随机采样算法减少约束计算
+    -- 表示每收到一个scan，只随机采样之前的n个子图与当前扫描帧做匹配
+    random_sampling_const = 20;
     -- 添加约束的采样率,越高越好,计算量也越大
     sampling_ratio = 0.3,
     -- 约束初始位姿的平移量上限

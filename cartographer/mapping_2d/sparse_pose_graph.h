@@ -363,6 +363,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Set of all frozen trajectories not being optimized.
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
 
+  std::mt19937 gen;
+
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.
   class TrimmingHandle : public mapping::Trimmable {
